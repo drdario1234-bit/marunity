@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MarUnity LIVE Tex</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div id="onboarding-screen" class="onboarding-screen">
+  <div class="onboarding-card">
+    <div class="onboarding-brand">
+      <img src="logo.png" alt="MarUnity" class="onboarding-logo">
+      <div>
+        <h1>MarUnity LIVE Tex</h1>
+        <p>Configuración inicial</p>
+      </div>
+    </div>
+    <div class="onboarding-icon">🎥</div>
+    <h2>Conectá tu live</h2>
+    <p class="onboarding-description">Ingresá tu usuario para verificar tu perfil.</p>
+    <div class="onboarding-input-group">
+      <label for="input-tiktok-onboarding">USUARIO DE TIKTOK</label>
+      <div class="username-input-wrapper">
+        <span>@</span>
+        <input type="text" id="input-tiktok-onboarding" placeholder="tuusuario" autocomplete="off" autocapitalize="none" spellcheck="false">
+      </div>
+    </div>
+    <button id="btn-verificar-tiktok" class="onboarding-btn" type="button">Continuar</button>
+    <p id="onboarding-status" class="onboarding-status"></p>
+    <div class="onboarding-security">
+      <span>🔒</span>
+      <span>Verificación segura. No inicia el LIVE aún.</span>
+    </div>
+  </div>
+</div>
+
+<button id="btn-menu" type="button">☰</button>
+<div id="sidebar-fondo" class="sidebar-fondo hidden"></div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar" class="sidebar hidden">
+  <div>
+    <div class="sidebar-header">
+      <img src="logo.png" alt="MarUnity" class="logo-img">
+      <h1>MarUnity</h1>
+      <span>LIVE Tex</span>
+      <button id="btn-close-menu" type="button">✕</button>
+    </div>
+    <nav id="sidebar-nav">
+      <a href="#" data-panel="inicio" class="nav-item active">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        Inicio
+      </a>
+      <a href="#" data-panel="live" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.4"/><circle cx="12" cy="12" r="2"/></svg>
+        Conectar LIVE <span class="dot"></span>
+      </a>
+      <a href="#" data-panel="comentarios" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        Comentarios <span class="badge" id="badge-count">0</span>
+      </a>
+      <a href="#" data-panel="tex" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        Tex de voz
+      </a>
+      <a href="#" data-panel="config" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configuración
+      </a>
+      <a href="#" data-panel="sonidos" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        Sonidos
+      </a>
+      <a href="#" data-panel="historial" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"></polyline></svg>
+        Historial
+      </a>
+      <a href="#" data-panel="premium" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        Premium
+      </a>
+      <div class="nav-separator"></div>
+      <a href="#" data-panel="soporte" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+        Soporte
+      </a>
+      <a href="#" data-panel="terminos" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        Términos y Condiciones
+      </a>
+      <a href="#" data-panel="privacidad" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        Privacidad
+      </a>
+      <div class="nav-separator"></div>
+      <!-- AJUSTE DE SESION - MISMO ESTILO QUE LOS DEMAS -->
+      <a href="#" id="btn-sesion" class="nav-item">
+        <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Ajuste de sesión <span id="sesion-estado-dot" class="sesion-dot"></span>
+      </a>
+    </nav>
+        <div class="plan-box" id="plan-box">
+      <button id="btn-close-plan" type="button" aria-label="Cerrar">✕</button>
+      <p>Plan actual</p>
+      <h3>GRATIS</h3>
+      <p>Desbloqueá funciones avanzadas.</p>
+      <button id="btn-pro" type="button">★ Mejorar plan</button>
+      <div class="plan-links">
+        <a href="#" data-panel="soporte" class="plan-link">¿Necesitás ayuda?</a>
+      </div>
+    </div>
+  </div>
+  <div class="user-box">
+    <img src="logo.png" alt="User" class="avatar-img">
+    <div id="user-info-sidebar">
+      <span id="sidebar-user-name">Invitado</span>
+      <span id="sidebar-user-email">Iniciar sesión</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main id="main-content">
+  <header>
+    <div>
+      <h2 id="titulo-panel">Inicio</h2>
+      <p id="subtitulo-panel">Resumen de tu LIVE</p>
+    </div>
+    <div class="live-badge"><span></span> LIVE conectado</div>
+  </header>
+
+  <section class="panel" id="panel-inicio">
+    <div class="card card-perfil-live" id="card-perfil-live-inicio">
+      <div class="perfil-live-top">
+        <div class="perfil-live-avatar-wrapper">
+          <img id="perfil-live-avatar" src="logo.png" alt="Perfil LIVE" class="perfil-live-avatar">
+          <span class="perfil-live-estado-dot"></span>
+        </div>
+        <div class="perfil-live-info">
+          <span class="perfil-live-label">TRANSMITIENDO COMO</span>
+          <strong id="perfil-live-nickname">Usuario de TikTok</strong>
+          <span id="perfil-live-username" class="perfil-live-username">@usuario</span>
+          <div class="perfil-live-contadores">
+            <span>💬 <b id="perfil-live-count-comentarios">0</b> comentarios</span>
+            <span>❤️ <b id="perfil-live-count-likes">0</b> likes</span>
+            <span>🎁 <b id="perfil-live-count-regalo">0</b> regalos</span>
+          </div>
+        </div>
+        <button id="btn-editar-usuario" class="btn-edit-profile" type="button" title="Cambiar usuario">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+        </button>
+      </div>
+      <div class="perfil-live-footer">
+        <p class="perfil-live-nota">🔒 No podrás modificar el usuario durante 30 días.</p>
+      </div>
+    </div>
+    <div class="card card-welcome" id="card-bienvenida-audio">
+      <div class="card-welcome-left">
+        <div class="icon-circle welcome-icon">▶</div>
+        <div><b>Presentación</b><p>Cómo funciona</p></div>
+      </div>
+      <button id="btn-reproducir-bienvenida" type="button" class="btn-welcome">Escuchar</button>
+    </div>
+    <audio id="audio-bienvenida" src="bienvenida.mp3" preload="auto"></audio>
+    <div class="card"><h2>Bienvenido a MarUnity</h2><p class="muted">Seleccioná una opción del menú para comenzar.</p></div>
+    <div class="card" id="card-acciones-rapidas">
+      <h3>⚡ Acciones rápidas</h3>
+      <div class="quick-actions-grid">
+        <button class="quick-action-btn" data-panel="live" type="button">🔴 Conectar LIVE ahora</button>
+        <button class="quick-action-btn" data-panel="tex" type="button">🎙️ Probar voz</button>
+        <button class="quick-action-btn" data-panel="comentarios" type="button">💬 Ver comentarios</button>
+        <button class="quick-action-btn" data-panel="config" type="button">⚙️ Configurar</button>
+      </div>
+    </div>
+    <div class="card" id="card-soporte-inicio">
+      <h3>💬 Soporte y Contacto</h3>
+      <p class="muted">¿Tenés problemas? Estamos para ayudarte.</p>
+      <div class="contact-buttons">
+  <a href="mailto:contacto@marunity.com" class="contact-btn">📩 contacto@marunity.com</a>
+  <button type="button" class="contact-btn" id="btn-whatsapp-soporte">💚 WhatsApp Soporte</button>
+</div>
+
+      </div>
+    </div>
+    <div class="card" id="card-redes-inicio">
+      <h3>🌐 Comunidad MarUnity</h3>
+      <div class="social-links">
+        <a href="https://tiktok.com/@marunity" target="_blank" class="social-btn">TikTok</a>
+        <a href="https://instagram.com/marunity" target="_blank" class="social-btn">Instagram</a>
+        <a href="https://youtube.com/@marunity" target="_blank" class="social-btn">YouTube</a>
+        <a href="https://discord.gg/marunity" target="_blank" class="social-btn">WhatsApp</a>
+      </div>
+    </div>
+    <div class="card" id="card-legal-inicio">
+      <h3>📄 Información Legal</h3>
+      <p class="muted small">Transparencia y seguridad para tu cuenta.</p>
+      <div class="legal-links">
+        <a href="#" data-panel="terminos" class="legal-link">📜 Términos y Condiciones</a>
+        <a href="#" data-panel="privacidad" class="legal-link">🔒 Política de Privacidad</a>
+      </div>
+      <div class="version-info"><span>Versión: 2.0.1</span><span>© 2026 MarUnity LIVE Tex</span></div>
+    </div>
+    <div class="card" id="card-ayuda-rapida">
+      <h3>❓ ¿Necesitás ayuda?</h3>
+      <ul class="help-list">
+        <li><button type="button" class="help-item-btn" data-panel="live">¿Cómo conectar mi LIVE?</button></li>
+        <li><button type="button" class="help-item-btn" data-panel="tex">¿Cómo cambiar la voz?</button></li>
+        <li><button type="button" class="help-item-btn" data-panel="premium">¿Qué incluye PRO?</button></li>
+        <li><button type="button" class="help-item-btn" data-panel="soporte">Contactar a un humano</button></li>
+      </ul>
+      <button type="button" class="btn-save" data-panel="soporte">Ver toda la ayuda</button>
+    </div>
+  </section>
+
+  <section class="panel card hidden" id="panel-tex">
+    <div class="card-top">
+      <div class="icon-circle">🔊</div>
+      <div><b>Voz del LIVE</b><p>Texto a voz</p></div>
+      <label class="switch"><input type="checkbox" id="switch-voz" checked><span class="slider"></span></label>
+    </div>
+    <div class="voice-section">
+      <label>MOTOR</label>
+      <select id="select-motor-voz">
+        <option value="nativo">Android · Gratis</option>
+        <option value="elevenlabs">ElevenLabs · PRO</option>
+      </select>
+    </div>
+    <div class="voice-gallery-section">
+      <div class="voice-category">
+        <div class="voice-category-title-min"><span>Gratis</span></div>
+        <div class="voice-grid" id="free-voice-grid">
+          <button type="button" class="voice-card active" data-voice="mujer_latina"><div class="voice-card-icon"><img src="1103260.png" alt="Latina"></div><div class="voice-card-info"><strong>Latina</strong><span>Femenina</span></div><div class="voice-card-check">✓</div></button>
+          <button type="button" class="voice-card" data-voice="hombre_latino"><div class="voice-card-icon"><img src="1103261.png" alt="Latino"></div><div class="voice-card-info"><strong>Latino</strong><span>Masculina</span></div><div class="voice-card-check">✓</div></button>
+          <button type="button" class="voice-card" data-voice="espana"><div class="voice-card-icon"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="voice-card-info"><strong>España</strong><span>Española</span></div><div class="voice-card-check">✓</div></button>
+          <button type="button" class="voice-card" data-voice="android_extra"><div class="voice-card-icon"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="voice-card-info"><strong>Natural+</strong><span>Alternativa</span></div><div class="voice-card-check">✓</div></button>
+        </div>
+      </div>
+      <div class="voice-category pro-category">
+        <div class="voice-category-title-min"><span>PRO</span></div>
+        <div class="voice-grid" id="pro-voice-grid">
+          <button type="button" class="voice-card pro locked" data-voice="pro_1" disabled><div class="voice-card-icon">👑</div><div class="voice-card-info"><strong>Premium 01</strong><span>Femenina</span></div><div class="voice-card-lock">👑</div></button>
+          <button type="button" class="voice-card pro locked" data-voice="pro_2" disabled><div class="voice-card-icon">👑</div><div class="voice-card-info"><strong>Premium 02</strong><span>Masculina</span></div><div class="voice-card-lock">👑</div></button>
+          <button type="button" class="voice-card pro locked" data-voice="pro_3" disabled><div class="voice-card-icon">👑</div><div class="voice-card-info"><strong>Premium 03</strong><span>Profunda</span></div><div class="voice-card-lock">👑</div></button>
+          <button type="button" class="voice-card pro locked" data-voice="pro_4" disabled><div class="voice-card-icon">👑</div><div class="voice-card-info"><strong>Premium 04</strong><span>Especial</span></div><div class="voice-card-lock">👑</div></button>
+        </div>
+        <div class="voice-pro-message"><span>👑</span><div><strong>Próximamente</strong><p>Premium</p></div></div>
+      </div>
+    </div>
+    <select id="select-voz" style="display:none;">
+      <option value="mujer_latina">Español (Latino) - Mujer</option>
+      <option value="hombre_latino">Español (Latino) - Hombre</option>
+      <option value="espana">Español (España)</option>
+      <option value="android_extra">Android Natural+</option>
+      <option value="pro_1">Premium 01</option>
+      <option value="pro_2">Premium 02</option>
+      <option value="pro_3">Premium 03</option>
+      <option value="pro_4">Premium 04</option>
+    </select>
+    <div class="voice-blocked-section" style="margin-top:18px; border-top:1px solid rgba(255,255,255,0.08); padding-top:14px;">
+      <label style="font-size:11px;font-weight:800;color:#a855f7;letter-spacing:0.8px;display:block;margin-bottom:10px;">BLOQUEADAS</label>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <input type="text" id="palabras-bloqueadas" placeholder="Ej: hola, spam, link" autocomplete="off" class="input-dark" style="width:100% !important; background:#0f172a !important; border:1.5px solid rgba(168,85,247,0.5) !important; color:#fff !important; padding:13px 14px !important; border-radius:12px !important; font-size:15px !important; outline:none;">
+        <div style="display:flex; gap:8px; width:100%;">
+          <button id="btn-agregar-bloqueada" type="button" class="btn-save" style="flex:1.2; padding:13px; margin:0;">Agregar</button>
+          <button id="btn-ver-bloqueadas" type="button" class="btn-reset" style="flex:1; padding:13px; margin:0;">Ver (0)</button>
+        </div>
+      </div>
+      <div id="lista-chips-bloqueadas" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:14px;"></div>
+      <div id="portal-bloqueadas" class="hidden" style="margin-top:10px; text-align:center;">🌀</div>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="panel-live">
+    <div class="card">
+      <h2>Conectar LIVE</h2>
+      <p class="muted">Verificá tu usuario.</p>
+      <input type="text" id="input-tiktok-user" placeholder="ej: tuusuario" autocomplete="off" autocapitalize="none" spellcheck="false" class="input-dark">
+      <button class="btn-save" id="btn-conectar" type="button">Verificar</button>
+      <p id="estado-conexion" class="status-text"></p>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="panel-comentarios">
+    <div class="card">
+      <h2>Comentarios (<span id="comentarios-counter">0</span>)</h2>
+      <p class="muted small">Tiempo real · 1,000 max</p>
+      <div id="chat-container-box" class="chat-container"></div>
+    </div>
+  </section>
+
+  <section class="panel card hidden" id="panel-config">
+    <div class="card-top">
+      <div class="icon-circle">⚙️</div>
+      <div><b style="font-size: 18px;">Ajustes de Configuración</b><p style="font-size: 13px; color: #94a3b8;">Personaliza el comportamiento general de MarUnity LIVE</p></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
+      <div class="config-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+        <h3 style="font-size: 15px; color: #a855f7; margin-bottom: 12px; text-transform: uppercase;">🔊 LECTURA Y TTS</h3>
+        <div class="voice-section" style="margin-bottom: 15px;"><label>VELOCIDAD DE LA VOZ</label><div style="display: flex; align-items: center; gap: 12px;"><input type="range" id="range-velocidad-voz" min="0.5" max="2" step="0.1" value="1" style="flex: 1; accent-color: #a855f7;"><span id="label-velocidad" style="color: #a855f7;">1.0x</span></div></div>
+        <div class="voice-section" style="margin-bottom: 15px;"><label>TONO Y AGUDO</label><div style="display: flex; align-items: center; gap: 12px;"><input type="range" id="range-tono-voz" min="0.5" max="1.5" step="0.1" value="1" style="flex: 1; accent-color: #a855f7;"><span id="label-tono" style="color: #a855f7;">1.0</span></div></div>         <div class="voice-section" style="margin-bottom: 15px;"><label>VOLUMEN DE LA VOZ</label><div style="display: flex; align-items: center; gap: 12px;"><input type="range" id="range-volumen" min="0" max="1" step="0.1" value="1" style="flex: 1; accent-color: #a855f7;"><span id="label-volumen" style="color: #a855f7;">100%</span></div></div>
+      </div>
+      <div class="config-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+        <h3 style="font-size: 15px; color: #a855f7; margin-bottom: 12px;">🛡️ FILTROS Y SEGURIDAD</h3>
+        <div id="config-bloqueadas-wrapper" style="border:1px solid rgba(168,85,247,0.25); border-radius:12px; padding:12px; background:rgba(168,85,247,0.05);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><strong style="font-size:13px; color:#fff;">📋 Palabras bloqueadas</strong><span style="font-size:11px; color:#94a3b8; display:block;">Sincronizado con Tex de voz</span></div>
+            <div style="display:flex; gap:6px; align-items:center;"><span id="config-bloqueadas-count" style="font-size:12px; font-weight:800; color:#a855f7; background:#1e1b4b; padding:4px 8px; border-radius:20px;">0</span><button id="btn-config-ver-bloqueadas" type="button" class="btn-reset" style="padding:6px 10px; margin:0; font-size:12px;">Ver</button></div>
+          </div>
+          <div id="config-lista-bloqueadas" class="hidden" style="margin-top:12px; display:flex; flex-wrap:wrap; gap:6px;"></div>
+        </div>
+      </div>
+      <div class="config-actions"><button class="btn-save" id="btn-guardar-config" type="button">Guardar ajustes</button><button class="btn-reset" id="btn-reset-config" type="button">Restablecer</button></div>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="panel-sonidos" style="padding:0; background:transparent; border:0;">
+    <iframe src="sonidos.html" id="iframe-sonidos" style="width:100%; height:85vh; border:0; border-radius:16px; background:#0F0F13;"></iframe>
+  </section>
+
+  <section class="panel hidden" id="panel-historial"><div class="card"><h2>Historial</h2><p class="muted">Anteriores</p></div></section>
+
+  <section class="panel hidden" id="panel-premium">
+    <div class="card" style="text-align:center;">
+      <h2>👑 Pasate a PRO</h2>
+      <p id="premium-precio-mensual" style="font-size:32px; font-weight:900; color:#A855F7; margin: 10px 0;">$4.99 USD</p>
+      <p class="muted">por mes</p>
+      <div id="premium-features" style="text-align:left; margin: 20px 0;"></div>
+      <button id="btn-comprar-premium" class="btn-save" style="width:100%; background: linear-gradient(90deg, #A855F7, #FF0050);">COMPRAR AHORA</button>
+      <p id="premium-precio-anual" class="muted small" style="margin-top:10px;"></p>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="panel-soporte">
+    <div class="card"><h2>🎧 Centro de Soporte</h2><p class="muted">Estamos acá para ayudarte 24/7</p></div>
+  </section>
+  <section class="panel hidden" id="panel-ayuda">
+    <div class="card"><h2>❓ Ayuda y FAQ</h2><p class="muted">Preguntas frecuentes</p></div>
+  </section>
+  <section class="panel hidden" id="panel-contacto">
+    <div class="card"><h2>📩 Contacto</h2><p class="muted">Escribinos</p></div>
+  </section>
+
+  <section class="panel hidden" id="panel-terminos">
+    <div class="card">
+      <h2>📜 Términos y Condiciones</h2>
+      <p class="muted small">Última actualización: Octubre 2026</p>
+      <div class="legal-content">
+        <h3>1. Uso del servicio</h3><p>MarUnity LIVE Tex es una herramienta para leer comentarios de TikTok LIVE mediante texto a voz.</p>
+        <h3>2. Cuenta y usuario</h3><p>No podrás modificar el usuario durante 30 días en plan GRATIS. Plan PRO permite cambios ilimitados.</p>
+        <h3>5. Contacto legal</h3><p><a href="mailto:legal@marunity.com">legal@marunity.com</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel hidden" id="panel-privacidad">
+    <div class="card">
+      <h2>🔒 Política de Privacidad</h2>
+      <p class="muted small">Última actualización: Octubre 2026</p>
+      <div class="legal-content">
+        <h3>Datos que recolectamos</h3><p>Solo tu usuario público de TikTok y configuración de voz. No guardamos contraseñas.</p>
+        <h3>Contacto privacidad</h3><p><a href="mailto:privacidad@marunity.com">privacidad@marunity.com</a></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- MODALES -->
+<div id="modal-confirmar-tiktok" class="tiktok-modal hidden">
+  <div class="tiktok-modal-backdrop" id="modal-tiktok-backdrop"></div>
+  <div class="tiktok-confirm-card" role="dialog" aria-modal="true">
+    <div class="confirm-header"><div><span class="confirm-eyebrow">PERFIL ENCONTRADO</span><h2>¿Tu cuenta?</h2></div><button id="btn-cerrar-confirmacion" class="confirm-close" type="button">✕</button></div>
+    <div class="tiktok-profile-preview"><img id="profile-avatar" src="logo.png" alt="Foto" class="profile-avatar"><div class="profile-info"><strong id="profile-nickname">Usuario de TikTok</strong><span id="profile-username">@usuario</span><span id="profile-live-status" class="profile-live-status">Verificando...</span></div></div>
+    <div class="confirm-actions"><button id="btn-volver-tiktok" class="btn-confirm-secondary" type="button">Volver</button><button id="btn-confirmar-tiktok" class="btn-confirm-primary" type="button">Confirmar</button></div>
+  </div>
+</div>
+
+<div id="overlay-fondo" class="overlay-fondo hidden"></div>
+<div id="overlay-panel" class="overlay-panel hidden">
+  <div class="overlay-header"><img src="logo.png" alt="MarUnity" class="logo-img-sm"><b>MarUnity</b><span class="Tex-on">● Tex ON</span></div>
+  <div class="overlay-row"><span>🎙️ Tex de voz</span><label class="switch small"><input type="checkbox" id="switch-overlay" checked><span class="slider"></span></label></div>
+</div>
+
+<button id="btn-mic-float" type="button" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; width: 56px; height: 56px; border-radius: 50%; border: none; background: #a855f7; color: #fff; font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">🎙️</button>
+<!-- BANNER AJUSTE DE SESION -->
+<div id="sesion-fondo" class="sesion-fondo hidden"></div>
+<div id="sesion-sheet" class="sesion-sheet">
+  <div class="sesion-handle"></div>
+  <div class="sesion-sheet-header">
+    <div>
+      <h3 id="sesion-titulo">Ajuste de sesión</h3>
+      <p id="sesion-subtitulo">Gestioná tu cuenta</p>
+    </div>
+    <button id="btn-cerrar-sesion-sheet" type="button">✕</button>
+  </div>
+  <div id="sesion-contenido">
+    <p id="sesion-email-texto" class="sesion-email"></p>
+    <button id="btn-accion-sesion" type="button" class="btn-sesion-accion">Cerrar sesión</button>
+    <p class="sesion-nota">Si cerrás sesión, volvés a la pantalla de login.</p>
+  </div>
+</div>
+
+<script src="premium-config.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="script.js"></script>
+<script src="auth.js"></script>
+<script>
+  (function() {
+    var box = document.getElementById('plan-box');
+    var btnClose = document.getElementById('btn-close-plan');
+    if (!box || !btnClose) return;
+
+    var KEY = 'marunity_plan_closed_at_v4';
+    var UN_DIA = 24 * 60 * 60 * 1000;
+
+    // ESTO ES SOLO PARA PROBAR: si entras con ?reset-plan, borra el contador
+    if (window.location.search.indexOf('reset-plan') !== -1) {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+    }
+
+    function ocultarSinHueco() {
+      box.style.display = 'none';
+      box.style.margin = '0';
+      box.style.padding = '0';
+      box.style.height = '0';
+      box.style.overflow = 'hidden';
+    }
+
+    try {
+      var lastClosed = parseInt(localStorage.getItem(KEY) || '0', 10);
+      var now = Date.now();
+      if (lastClosed && (now - lastClosed) < UN_DIA) {
+        ocultarSinHueco();
+      }
+    } catch (e) {}
+
+    btnClose.addEventListener('click', function() {
+      ocultarSinHueco();
+      try {
+        localStorage.setItem(KEY, String(Date.now()));
+      } catch (e) {}
+    });
+  })();
+</script>
+</body>
+</html>
