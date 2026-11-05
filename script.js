@@ -246,27 +246,58 @@ document.addEventListener('DOMContentLoaded', () => {
   if(btnVolverTikTok) btnVolverTikTok.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
   if(modalTikTokBackdrop) modalTikTokBackdrop.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
 
-  if(btnConfirmarTikTok){
-    btnConfirmarTikTok.addEventListener('click',()=>{
-      if(conexionEnCurso || !perfilPendiente) return;
+ if (btnConfirmarTikTok) {
+  btnConfirmarTikTok.addEventListener('click', async () => {
+    if (conexionEnCurso || !perfilPendiente) return;
 
-      const usuario = normalizarUsuarioTikTok(perfilPendiente.username);
+    const usuario = normalizarUsuarioTikTok(perfilPendiente.username);
 
-      if(!usuario){
-        mostrarErrorConfirmacion('No se pudo obtener el usuario.');
-        return;
+    if (!usuario) {
+      mostrarErrorConfirmacion('No se pudo obtener el usuario.');
+      return;
+    }
+
+    conexionEnCurso = true;
+    btnConfirmarTikTok.disabled = true;
+    btnConfirmarTikTok.textContent = 'Comprobando sesión...';
+
+    try {
+      const clientAuth = window.supabaseAuth;
+
+      if (!clientAuth) {
+        throw new Error('No se pudo inicializar la autenticación.');
       }
 
-      // Guardar temporalmente el usuario confirmado
-      sessionStorage.setItem('marunity_tiktok_pendiente', usuario);
+      const sessionRes = await clientAuth.auth.getSession();
 
-      // Enviar al usuario al inicio de sesión con Google
-      btnConfirmarTikTok.disabled = true;
-      btnConfirmarTikTok.textContent = 'Continuando con Google...';
+      if (sessionRes.error) {
+        throw sessionRes.error;
+      }
 
-      window.location.href = 'login.html';
-    });
-  }
+      const session = sessionRes?.data?.session;
+
+      if (session?.access_token) {
+        // Ya inició sesión: conectar TikTok directamente.
+        await conectarTikTok(usuario, true);
+        sessionStorage.removeItem('marunity_tiktok_pendiente');
+      } else {
+        // No hay sesión: guardar usuario y pedir login con Google.
+        sessionStorage.setItem('marunity_tiktok_pendiente', usuario);
+        btnConfirmarTikTok.textContent = 'Continuando con Google...';
+        window.location.href = 'login.html';
+      }
+
+    } catch (error) {
+      console.error('Error al confirmar TikTok:', error);
+      mostrarErrorConfirmacion(error?.message || 'No se pudo continuar.');
+
+      btnConfirmarTikTok.disabled = false;
+      btnConfirmarTikTok.textContent = 'Confirmar';
+    } finally {
+      conexionEnCurso = false;
+    }
+  });
+}
 
   function actualizarPerfilLiveConectado(datos) {
     if (perfilLiveAvatar && datos.profilePicture) { perfilLiveAvatar.src = datos.profilePicture; perfilLiveAvatar.onerror = () => { perfilLiveAvatar.onerror = null; perfilLiveAvatar.src = 'logo.png'; }; }
