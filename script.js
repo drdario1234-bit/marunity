@@ -24,6 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOverlayLive = document.getElementById('btn-overlay-live');
   const inputVel = document.getElementById('range-velocidad-voz');
   const inputVol = document.getElementById('range-volumen');
+  const inputTono = document.getElementById('range-tono-voz');
+  const labelVel = document.getElementById('label-velocidad');
+  const labelTono = document.getElementById('label-tono');
+  const labelVol = document.getElementById('label-volumen');
+
+  function getVolumenReal() {
+  const v = parseFloat(inputVol?.value);
+  if (isNaN(v)) return 1;
+  return Math.min(1, Math.max(0, v));
+}
   const inputBloq = document.getElementById('palabras-bloqueadas');
   const inputVoz = document.getElementById('select-voz');
   const inputMotorVoz = document.getElementById('select-motor-voz');
@@ -122,8 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const audioBienvenida = document.getElementById('audio-bienvenida');
   if (btnReproducirBienvenida && audioBienvenida) {
     btnReproducirBienvenida.addEventListener('click', () => {
-      const volGeneral = (parseInt(inputVol?.value) || 100)/100;
-      audioBienvenida.volume = volGeneral;
+      audioBienvenida.volume = getVolumenReal();
       if (audioBienvenida.paused) {
         audioBienvenida.currentTime=0;
         audioBienvenida.play().then(()=>{ btnReproducirBienvenida.textContent='Pausar'; }).catch(()=>{ toast('No se encontró bienvenida.mp3'); });
@@ -447,8 +456,7 @@ if (!token) {
     if(isPlayingEpico||sonidoEpicoQueue.length===0) return;
     isPlayingEpico=true;
     const tier=sonidoEpicoQueue.shift();
-    const volGeneral=(parseInt(inputVol?.value)||100)/100;
-    const volEpico=volGeneral*0.6;
+    const volEpico = getVolumenReal() * 0.6;
     try{
       const audioUrl=SONIDOS_URL[tier];
       const audio=new Audio(audioUrl);
@@ -503,7 +511,7 @@ if (!token) {
 
   function guardarAuto(){
     const cfg={
-      velocidad:inputVel?.value||'2.0', volumen:inputVol?.value||'100',
+      velocidad:inputVel?.value||'1', volumen:inputVol?.value||'1', tono:inputTono?.value||'1',
       voz:inputVoz?.value||'', motorVoz:inputMotorVoz?.value||'nativo',
       vozOn:switchVoz?.checked??true, overlayOn:switchOverlay?.checked??true,
       sonido_rosa:document.getElementById('sonido-rosa')?.checked??true,
@@ -522,8 +530,9 @@ if (!token) {
     const usuarioGuardado=localStorage.getItem('texyiu_tiktok_user_confirmado')||localStorage.getItem('texyiu_tiktok_user');
     if(inputUser&&usuarioGuardado) inputUser.value=usuarioGuardado;
     if(inputOnboarding&&usuarioGuardado) inputOnboarding.value=usuarioGuardado;
-    if(cfg.velocidad&&inputVel){ inputVel.value=cfg.velocidad; const el=document.getElementById('val-velocidad'); if(el) el.innerText=cfg.velocidad+'x'; }
-    if(cfg.volumen&&inputVol){ inputVol.value=cfg.volumen; const el=document.getElementById('val-volumen'); if(el) el.innerText=cfg.volumen+'%'; }
+    if(cfg.velocidad&&inputVel){ inputVel.value=cfg.velocidad; if(labelVel) labelVel.textContent=parseFloat(cfg.velocidad).toFixed(1)+'x'; }
+    if(cfg.volumen&&inputVol){ inputVol.value=cfg.volumen; if(labelVol) labelVol.textContent=Math.round(getVolumenReal()*100)+'%'; }
+    if(cfg.tono&&inputTono){ inputTono.value=cfg.tono; if(labelTono) labelTono.textContent=parseFloat(cfg.tono).toFixed(1); }
     if(cfg.voz&&inputVoz) {
       inputVoz.value=cfg.voz;
       document.querySelectorAll('#free-voice-grid .voice-card').forEach(c => {
@@ -540,8 +549,9 @@ if (!token) {
     const footerVoz=document.getElementById('footer-voz'); if(footerVoz&&switchVoz) footerVoz.innerText=switchVoz.checked?'ON':'OFF';
   } catch(e){ console.log('Error cargando config:',e); }
 
-  if(inputVel) inputVel.addEventListener('input',()=>{ const el=document.getElementById('val-velocidad'); if(el) el.innerText=inputVel.value+'x'; guardarAuto(); });
-  if(inputVol) inputVol.addEventListener('input',()=>{ const el=document.getElementById('val-volumen'); if(el) el.innerText=inputVol.value+'%'; guardarAuto(); });
+  if(inputVel) inputVel.addEventListener('input',()=>{ if(labelVel) labelVel.textContent=parseFloat(inputVel.value).toFixed(1)+'x'; guardarAuto(); });
+  if(inputVol) inputVol.addEventListener('input',()=>{ if(labelVol) labelVol.textContent=Math.round(getVolumenReal()*100)+'%'; guardarAuto(); });
+  if(inputTono) inputTono.addEventListener('input',()=>{ if(labelTono) labelTono.textContent=parseFloat(inputTono.value).toFixed(1); guardarAuto(); });
   if(inputVoz) inputVoz.addEventListener('change',guardarAuto);
   if(inputMotorVoz) inputMotorVoz.addEventListener('change',()=>{ detenerTodaVoz(); guardarAuto(); });
   if(switchVoz) switchVoz.addEventListener('change',()=>{ const f=document.getElementById('footer-voz'); if(f) f.innerText=switchVoz.checked?'ON':'OFF'; if(!switchVoz.checked) detenerTodaVoz(); guardarAuto(); });
@@ -654,9 +664,9 @@ if (!token) {
 
     if(audioUrl){
       try {
+        
         const audio = new Audio(audioUrl);
-        const volGeneral = (parseInt(inputVol?.value) || 100) / 100;
-        audio.volume = volGeneral;
+        audio.volume = getVolumenReal();
         audio.play().catch(e => {
           console.warn("Fallo al reproducir audio de Google TTS URL, usando voz nativa:", e);
           if(texto.length>180) texto=texto.substring(0,180);
@@ -682,8 +692,7 @@ if (!token) {
     const base64Data=elevenLabsQueue.shift();
     try{
       currentElevenLabsAudio=new Audio(`data:audio/mp3;base64,${base64Data}`);
-      const volGeneral=(parseInt(inputVol?.value)||100)/100;
-      currentElevenLabsAudio.volume=volGeneral;
+      currentElevenLabsAudio.volume=getVolumenReal();
       currentElevenLabsAudio.onended=()=>{ isPlayingElevenLabs=false; currentElevenLabsAudio=null; setTimeout(procesarColaElevenLabs,100); };
       currentElevenLabsAudio.onerror=()=>{ isPlayingElevenLabs=false; currentElevenLabsAudio=null; setTimeout(procesarColaElevenLabs,200); };
       currentElevenLabsAudio.play().catch(()=>{ isPlayingElevenLabs=false; currentElevenLabsAudio=null; setTimeout(procesarColaElevenLabs,200); });
@@ -696,9 +705,9 @@ if (!token) {
     const texto=ttsQueue.shift();
     try{
       const utter=new SpeechSynthesisUtterance(texto);
-      utter.rate=parseFloat(inputVel?.value)||2.0;
-      utter.volume=(parseInt(inputVol?.value)||100)/100;
-      utter.pitch=1.0;
+      utter.rate=parseFloat(inputVel?.value)||1;
+      utter.volume=getVolumenReal();
+      utter.pitch=parseFloat(inputTono?.value)||1;
       const voces=speechSynthesis.getVoices();
       const vozEs=voces.find(v=>v.lang.toLowerCase().includes('es-419')||v.lang.toLowerCase().includes('es-mx')||v.lang.toLowerCase().includes('es-us'))||voces.find(v=>v.lang.toLowerCase().includes('es'))||voces[0];
       if(vozEs) utter.voice=vozEs;
@@ -909,7 +918,7 @@ async function runStartup() {
     setStartupCheck('startup-server', 'success', 'En línea');
   }
   setStartupProgress(85, 'Casi listo...');
-  await esperar(400);
+  await esperar(400);reproducirVoz()
 
   // 4. COMENTARIOS
   setStartupCheck('startup-comments', 'loading', 'Recuperando...');
