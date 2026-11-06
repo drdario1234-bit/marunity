@@ -401,6 +401,113 @@
     <p class="sesion-nota">Si cerrás sesión, volvés a la pantalla de login.</p>
   </div>
 </div>
+  <!-- PANTALLA DE PREPARACIÓN MARUNITY -->
+<div id="marunity-startup" class="marunity-startup">
+
+  <div class="startup-card">
+
+    <div class="startup-brand">
+      <img src="logo.png" alt="MarUnity">
+      <div>
+        <h1>MarUnity</h1>
+        <span>LIVE Tex</span>
+      </div>
+    </div>
+
+    <div class="startup-loader">
+      <div class="startup-spinner"></div>
+    </div>
+
+    <h2 id="startup-title">Preparando tu espacio</h2>
+
+    <p id="startup-description">
+      Estamos verificando tu cuenta y recuperando tu configuración.
+    </p>
+
+    <div class="startup-checks">
+
+      <div class="startup-check" id="startup-google">
+        <div class="startup-check-info">
+          <strong>Cuenta Google</strong>
+          <span>Verificando sesión...</span>
+        </div>
+        <span class="startup-status">Pendiente</span>
+      </div>
+
+      <div class="startup-check" id="startup-tiktok">
+        <div class="startup-check-info">
+          <strong>Perfil de TikTok</strong>
+          <span>Recuperando perfil...</span>
+        </div>
+        <span class="startup-status">Pendiente</span>
+      </div>
+
+      <div class="startup-check" id="startup-server">
+        <div class="startup-check-info">
+          <strong>Servidor MarUnity</strong>
+          <span>Comprobando disponibilidad...</span>
+        </div>
+        <span class="startup-status">Pendiente</span>
+      </div>
+
+      <div class="startup-check" id="startup-comments">
+        <div class="startup-check-info">
+          <strong>Recuperación de comentarios</strong>
+          <span>Recuperando historial...</span>
+        </div>
+        <span class="startup-status">Pendiente</span>
+      </div>
+
+    </div>
+
+    <div class="startup-profile" id="startup-profile">
+
+      <div class="startup-profile-heading">
+        <span>PERFIL DE CUENTA</span>
+        <span id="startup-profile-status">Verificando...</span>
+      </div>
+
+      <div class="startup-profile-data">
+        <img
+          id="startup-avatar"
+          src="logo.png"
+          alt="Foto de perfil de TikTok"
+        >
+
+        <div class="startup-profile-info">
+          <strong id="startup-nickname">Recuperando perfil</strong>
+          <span id="startup-username">@usuario</span>
+        </div>
+
+        <span id="startup-profile-check">●</span>
+      </div>
+
+    </div>
+
+    <div class="startup-progress">
+      <div class="startup-progress-track">
+        <div id="startup-progress-bar"></div>
+      </div>
+      <span id="startup-progress-text">Verificando servicios...</span>
+    </div>
+
+    <button
+      id="btn-startup-continue"
+      class="startup-continue"
+      type="button"
+      disabled
+    >
+      CONTINUAR
+    </button>
+
+    <p class="startup-footer">
+      MarUnity LIVE Tex · Preparación de cuenta
+    </p>
+
+  </div>
+
+</div>
+<!-- FIN PANTALLA DE PREPARACIÓN -->
 
 <script src="premium-config.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -444,6 +551,7 @@
       } catch (e) {}
     });
   })();
+  
 </script>
 </body>
 </html>
