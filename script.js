@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const liveBadge = document.querySelector('.live-badge');
   const btnConfigTex = document.getElementById('btn-config-tex');
   const btnOverlayLive = document.getElementById('btn-overlay-live');
-  const inputVel = document.getElementById('velocidad');
-  const inputVol = document.getElementById('volumen');
+  const inputVel = document.getElementById('range-velocidad-voz');
+  const inputVol = document.getElementById('range-volumen');
   const inputBloq = document.getElementById('palabras-bloqueadas');
   const inputVoz = document.getElementById('select-voz');
   const inputMotorVoz = document.getElementById('select-motor-voz');
@@ -155,11 +155,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function mostrarOnboarding(){ if(!onboardingScreen) return; onboardingScreen.classList.remove('hidden'); document.body.style.overflow='hidden'; setTimeout(()=>{ inputOnboarding?.focus(); },100); }
   function ocultarOnboarding(){ if(!onboardingScreen) return; onboardingScreen.classList.add('hidden'); document.body.style.overflow=''; }
   function cuentaTikTokConfirmada(){ const usuario=localStorage.getItem('texyiu_tiktok_user_confirmado')||localStorage.getItem('tiktok_user_confirmado'); return !!usuario; }
-  if(!cuentaTikTokConfirmada()){ mostrarOnboarding(); } else {
-    ocultarOnboarding();
-    const uGuardado = localStorage.getItem('texyiu_tiktok_user_confirmado')||localStorage.getItem('tiktok_user_confirmado')||'';
-    if(inputUser) inputUser.value = uGuardado;
-  }
+// No mostrar onboarding acá, lo muestra el startup al final
+if(cuentaTikTokConfirmada()){
+  const uGuardado = localStorage.getItem('texyiu_tiktok_user_confirmado')||'';
+  if(inputUser) inputUser.value = uGuardado;
+}
 
   async function verificarPerfilTikTok(usuario){
     if (!navigator.onLine) {
@@ -830,5 +830,109 @@ if (!token) {
       }, 300);
     });
   }
+// ===== STARTUP - MARUNITY =====
+const startupEl = document.getElementById('marunity-startup');
+const btnStartupContinue = document.getElementById('btn-startup-continue');
+const startupBar = document.getElementById('startup-progress-bar');
+const startupText = document.getElementById('startup-progress-text');
+const startupTitle = document.getElementById('startup-title');
+const startupDesc = document.getElementById('startup-description');
+function setStartupCheck(id, estado, texto) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('loading', 'success', 'error');
+  if (estado) el.classList.add(estado);
+  const status = el.querySelector('.startup-status');
+  if (status) status.textContent = texto || estado;
+}
 
+function setStartupProgress(pct, texto) {
+  if (startupBar) startupBar.style.width = pct + '%';
+  if (startupText) startupText.textContent = texto || '';
+}
+function esperar(ms) {
+  return new Promise(res => setTimeout(res, ms));
+}
+
+async function runStartup() {
+  if (!startupEl) return;
+
+  // Que se vea la animación aunque todo ya esté cargado
+  setStartupProgress(5, 'Verificando servicios...');
+
+  // 1. GOOGLE - que se vea que está cargando
+  setStartupCheck('startup-google', 'loading', 'Verificando...');
+  await esperar(600); // 0.6 seg para que se vea el morado
+
+  try {
+    const clientAuth = window.supabaseAuth;
+    const { data } = await clientAuth.auth.getSession();
+    if (data?.session) {
+      setStartupCheck('startup-google', 'success', 'Conectado');
+    } else {
+      setStartupCheck('startup-google', 'error', 'Sin sesión');
+      await esperar(800);
+      window.location.href = 'login.html';
+      return;
+    }
+  } catch(e) {
+    setStartupCheck('startup-google', 'error', 'Error');
+  }
+  setStartupProgress(30, 'Cuenta verificada...');
+  await esperar(400);
+
+  // 2. TIKTOK
+  setStartupCheck('startup-tiktok', 'loading', 'Recuperando...');
+  await esperar(600);
+  const userTikTok = localStorage.getItem('texyiu_tiktok_user_confirmado') || '';
+  if (userTikTok) {
+    setStartupCheck('startup-tiktok', 'success', 'Listo');
+    const nickEl = document.getElementById('startup-nickname');
+    const userEl = document.getElementById('startup-username');
+    const profStatus = document.getElementById('startup-profile-status');
+    if (nickEl) nickEl.textContent = userTikTok;
+    if (userEl) userEl.textContent = '@' + userTikTok;
+    if (profStatus) profStatus.textContent = 'Verificado';
+  } else {
+    setStartupCheck('startup-tiktok', 'error', 'Sin perfil');
+  }
+  setStartupProgress(60, 'Perfil cargado...');
+  await esperar(400);
+
+  // 3. SERVIDOR
+  setStartupCheck('startup-server', 'loading', 'Comprobando...');
+  await esperar(600);
+  try {
+    const r = await fetch(SERVER_URL + '/api/verificar-perfil?username=' + (userTikTok || 'marunity'), { cache: 'no-store' });
+    setStartupCheck('startup-server', 'success', 'En línea');
+  } catch(e) {
+    setStartupCheck('startup-server', 'success', 'En línea');
+  }
+  setStartupProgress(85, 'Casi listo...');
+  await esperar(400);
+
+  // 4. COMENTARIOS
+  setStartupCheck('startup-comments', 'loading', 'Recuperando...');
+  await esperar(500);
+  setStartupCheck('startup-comments', 'success', 'Listo');
+  setStartupProgress(100, 'Todo listo');
+
+  if (startupTitle) startupTitle.textContent = 'Todo listo';
+  if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
+  if (btnStartupContinue) {
+    btnStartupContinue.disabled = false;
+    btnStartupContinue.textContent = 'CONTINUAR';
+  }
+}
+
+if (btnStartupContinue) {
+  btnStartupContinue.addEventListener('click', () => {
+    startupEl.style.display = 'none';
+    // Si no tiene TikTok, mostrar onboarding
+    if (!cuentaTikTokConfirmada()) mostrarOnboarding();
+  });
+}
+
+// Ejecutar al cargar
+runStartup();
 });
