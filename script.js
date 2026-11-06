@@ -382,6 +382,8 @@ if (!token) {
       if(btnConectar){ btnConectar.textContent=`Conectado @${usuario}`; btnConectar.style.background='#22c55e'; btnConectar.disabled=false; }
       toast(`Conectado a @${usuario}`,false);
       setLiveBadge(true,`Conectado @${usuario}`);
+
+      reproducirVoz(`Conectado correctamente. Estás usando la voz nativa.`);
       
       conectarWebSockets(usuario);
       if(vieneDeConfirmacion){ cerrarModalPerfil(); ocultarOnboarding(); }
