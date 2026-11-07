@@ -383,7 +383,8 @@ if (!token) {
       toast(`Conectado a @${usuario}`,false);
       setLiveBadge(true,`Conectado @${usuario}`);
 
-      reproducirVoz(`Conectado correctamente. Estás usando la voz nativa.`);
+      reproducirVoz(`Conectado correctamente. Estás usando la voz nativa del navegador,
+      Esperando comentarios.`);
       
       conectarWebSockets(usuario);
       if(vieneDeConfirmacion){ cerrarModalPerfil(); ocultarOnboarding(); }
