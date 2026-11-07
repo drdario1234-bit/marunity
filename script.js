@@ -844,11 +844,11 @@ if (!token) {
   }
 // ===== STARTUP - MARUNITY =====
 const startupEl = document.getElementById('marunity-startup');
-const btnStartupContinue = document.getElementById('btn-startup-continue');
 const startupBar = document.getElementById('startup-progress-bar');
 const startupText = document.getElementById('startup-progress-text');
 const startupTitle = document.getElementById('startup-title');
 const startupDesc = document.getElementById('startup-description');
+
 function setStartupCheck(id, estado, texto) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -862,6 +862,7 @@ function setStartupProgress(pct, texto) {
   if (startupBar) startupBar.style.width = pct + '%';
   if (startupText) startupText.textContent = texto || '';
 }
+
 function esperar(ms) {
   return new Promise(res => setTimeout(res, ms));
 }
@@ -869,12 +870,11 @@ function esperar(ms) {
 async function runStartup() {
   if (!startupEl) return;
 
-  // Que se vea la animación aunque todo ya esté cargado
   setStartupProgress(5, 'Verificando servicios...');
 
-  // 1. GOOGLE - que se vea que está cargando
+  // 1. GOOGLE
   setStartupCheck('startup-google', 'loading', 'Verificando...');
-  await esperar(600); // 0.6 seg para que se vea el morado
+  await esperar(600);
 
   try {
     const clientAuth = window.supabaseAuth;
@@ -915,13 +915,13 @@ async function runStartup() {
   setStartupCheck('startup-server', 'loading', 'Comprobando...');
   await esperar(600);
   try {
-    const r = await fetch(SERVER_URL + '/api/verificar-perfil?username=' + (userTikTok || 'marunity'), { cache: 'no-store' });
+    await fetch(SERVER_URL + '/api/verificar-perfil?username=' + (userTikTok || 'marunity'), { cache: 'no-store' });
     setStartupCheck('startup-server', 'success', 'En línea');
   } catch(e) {
     setStartupCheck('startup-server', 'success', 'En línea');
   }
   setStartupProgress(85, 'Casi listo...');
-  await esperar(400);reproducirVoz()
+  await esperar(400);
 
   // 4. COMENTARIOS
   setStartupCheck('startup-comments', 'loading', 'Recuperando...');
@@ -931,20 +931,21 @@ async function runStartup() {
 
   if (startupTitle) startupTitle.textContent = 'Todo listo';
   if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
-  if (btnStartupContinue) {
-    btnStartupContinue.disabled = false;
-    btnStartupContinue.textContent = 'CONTINUAR';
-  }
-}
 
-if (btnStartupContinue) {
-  btnStartupContinue.addEventListener('click', () => {
+  // Transición automática al finalizar
+  await esperar(600);
+  startupEl.style.transition = 'opacity 0.4s ease';
+  startupEl.style.opacity = '0';
+
+  setTimeout(() => {
     startupEl.style.display = 'none';
-    // Si no tiene TikTok, mostrar onboarding
-    if (!cuentaTikTokConfirmada()) mostrarOnboarding();
-  });
+    if (!cuentaTikTokConfirmada()) {
+      mostrarOnboarding();
+    }
+  }, 400);
 }
 
 // Ejecutar al cargar
 runStartup();
+
 });
