@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const perfilLiveCountComentarios = document.getElementById('perfil-live-count-comentarios');
   const perfilLiveCountLikes = document.getElementById('perfil-live-count-likes');
   const statLikesHoy = document.getElementById('stat-likes-hoy');
-  const perfilLiveCountRegalo = document.getElementById('perfil-live-count-regalo'); // Selector agregado para regalos
+  const perfilLiveCountRegalo = document.getElementById('perfil-live-count-regalo');
 
   const btnAgregarBloqueada = document.getElementById('btn-agregar-bloqueada');
   const btnVerBloqueadas = document.getElementById('btn-ver-bloqueadas');
@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let totalLikesAcumulados = 0;
   let likesHoyAcumulados = 0;
-  let totalRegalosAcumulados = 0; // Variable para acumular regalos
+  let totalRegalosAcumulados = 0;
   let renderTimerInterval = null;
 
   function verificarBloqueo30Dias() {
@@ -334,7 +334,7 @@ if(cuentaTikTokConfirmada()){
     if(perfilLiveCountLikes) perfilLiveCountLikes.textContent = '0';
     if(statLikesHoy) statLikesHoy.textContent = '0';
     if(perfilLiveCountComentarios) perfilLiveCountComentarios.textContent = '0';
-    if(perfilLiveCountRegalo) perfilLiveCountRegalo.textContent = '0'; // Reiniciar contador de regalos en interfaz
+    if(perfilLiveCountRegalo) perfilLiveCountRegalo.textContent = '0';
     if(btnConectar){ btnConectar.disabled=true; btnConectar.textContent='Conectando...'; }
     iniciarContadorRender(estadoConexion, `Iniciando conexión con @${usuario}`);
     setLiveBadge(false,'Conectando...');
@@ -697,18 +697,28 @@ if(cuentaTikTokConfirmada()){
     const texto=ttsQueue.shift();
     try{
       const utter=new SpeechSynthesisUtterance(texto);
-      utter.rate=parseFloat(inputVel?.value)||1;
-      utter.volume=getVolumenReal();
-      utter.pitch=parseFloat(inputTono?.value)||1;
-      const voces=speechSynthesis.getVoices();
-      const vozEs=voces.find(v=>v.lang.toLowerCase().includes('es-419')||v.lang.toLowerCase().includes('es-mx')||v.lang.toLowerCase().includes('es-us'))||voces.find(v=>v.lang.toLowerCase().includes('es'))||voces[0];
-      if(vozEs) utter.voice=vozEs;
+      
+      utter.rate = parseFloat(inputVel?.value) || 1.0;
+      utter.volume = getVolumenReal();
+      utter.pitch = parseFloat(inputTono?.value) || 1.0;
+
+      const mejorVoz = obtenerMejorVozNativa();
+      if(mejorVoz) {
+        utter.voice = mejorVoz;
+      }
+
       utter.onend=()=>{ isSpeaking=false; setTimeout(procesarColaNativa,100); };
       utter.onerror=()=>{ isSpeaking=false; setTimeout(procesarColaNativa,200); };
       speechSynthesis.speak(utter);
     } catch(e){ isSpeaking=false; }
   }
-  if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged=()=>{ speechSynthesis.getVoices(); }; }
+
+  if('speechSynthesis' in window){ 
+    speechSynthesis.onvoiceschanged = () => { 
+      speechSynthesis.getVoices(); 
+    }; 
+    setTimeout(() => { if(speechSynthesis.getVoices().length === 0) speechSynthesis.getVoices(); }, 100);
+  }
 
   const vistosReciente=new Map();
   function esDuplicadoCliente(usuario,mensaje){ const key=`${usuario}-${mensaje}`; const ahora=Date.now(); if(vistosReciente.has(key)&&ahora-vistosReciente.get(key)<4000) return true; vistosReciente.set(key,ahora); return false; }
@@ -721,7 +731,33 @@ if(cuentaTikTokConfirmada()){
     if (statLikesHoy) { statLikesHoy.textContent = likesHoyAcumulados; }
   }
 
-  // Función para incrementar y actualizar el contador de regalos en la interfaz
+  function obtenerMejorVozNativa() {
+    if (!('speechSynthesis' in window)) return null;
+    const voces = speechSynthesis.getVoices();
+    if (!voces || voces.length === 0) return null;
+
+    const vozPro = voces.find(v => 
+      (v.lang.toLowerCase().includes('es') || v.lang.toLowerCase().includes('spa')) && 
+      (v.name.toLowerCase().includes('google') || 
+       v.name.toLowerCase().includes('microsoft') || 
+       v.name.toLowerCase().includes('natural') || 
+       v.name.toLowerCase().includes('neural') ||
+       v.name.toLowerCase().includes('helena') ||
+       v.name.toLowerCase().includes('laura') ||
+       v.name.toLowerCase().includes('pablo'))
+    );
+
+    if (vozPro) return vozPro;
+
+    const vozLatino = voces.find(v => v.lang.toLowerCase().includes('es-419') || v.lang.toLowerCase().includes('es-mx') || v.lang.toLowerCase().includes('es-us') || v.lang.toLowerCase().includes('es-ar'));
+    if (vozLatino) return vozLatino;
+
+    const vozEspanol = voces.find(v => v.lang.toLowerCase().includes('es'));
+    if (vozEspanol) return vozEspanol;
+
+    return voces[0];
+  }
+
   function incrementarRegalos(cantidad) {
     const qty = parseInt(cantidad) || 1;
     totalRegalosAcumulados += qty;
@@ -768,11 +804,11 @@ if(cuentaTikTokConfirmada()){
     });
     socket.on('new-gift',(data)=>{
       const diamantes=data.diamondCount||data.diamonds||data.value||1;
-      incrementarRegalos(1); // Suma 1 al contador visual de regalos cada vez que llega uno
+      incrementarRegalos(1);
       onGift(diamantes);
       if(data.textoVoz||data.mensaje) reproducirVoz(data.textoVoz||data.mensaje, data.audioUrl);
       listaMensajes.push({usuario:data.usuario||'Regalo',mensaje:data.mensaje});
-      if(listaMensajes.length>5000) listaMensajes.shift(); // Límite subido a 5000
+      if(listaMensajes.length>5000) listaMensajes.shift();
       actualizarBandejaComentarios();
     });
     socket.on('gift',(data)=>{ 
