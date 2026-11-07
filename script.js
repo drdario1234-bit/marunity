@@ -1,13 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Gifts Fixed)');
+  console.log('TexYiu LIVE Tex - V9 RED BLACK (NATIVE SPEECH SYNTHESIS NEURAL OPTIMIZED)');
 
   const SERVER_URL = 'https://bot-tiktok-tslw.onrender.com';
   let socket = null;
   let listaMensajes = [];
 
-  let ttsQueue = []; let isSpeaking = false;
-  let elevenLabsQueue = []; let isPlayingElevenLabs = false; let currentElevenLabsAudio = null;
-  let sonidoEpicoQueue = []; let isPlayingEpico = false;
+  // COLA NATIVA Y SONIDOS
+  let ttsQueue = []; 
+  let isSpeaking = false;
+  let sonidoEpicoQueue = []; 
+  let isPlayingEpico = false;
+
+  // VOCES NATIVAS DEL NAVEGADOR
+  let vocesDisponibles = [];
+  let vozSeleccionadaObj = null;
 
   const sidebar = document.getElementById('sidebar');
   const sidebarFondo = document.getElementById('sidebar-fondo');
@@ -34,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isNaN(v)) return 1;
     return Math.min(1, Math.max(0, v));
   }
+
   const inputBloq = document.getElementById('palabras-bloqueadas');
   const inputVoz = document.getElementById('select-voz');
   const inputMotorVoz = document.getElementById('select-motor-voz');
@@ -61,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const perfilLiveUsername = document.getElementById('perfil-live-username');
   const perfilLiveCountComentarios = document.getElementById('perfil-live-count-comentarios');
   const perfilLiveCountLikes = document.getElementById('perfil-live-count-likes');
-  const perfilLiveCountRegalo = document.getElementById('perfil-live-count-regalo');
   const statLikesHoy = document.getElementById('stat-likes-hoy');
 
   const btnAgregarBloqueada = document.getElementById('btn-agregar-bloqueada');
@@ -79,8 +85,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let totalLikesAcumulados = 0;
   let likesHoyAcumulados = 0;
-  let totalRegalosAcumulados = 0;
   let renderTimerInterval = null;
+
+  // =========================================================================
+  // SISTEMA DE CARGA Y SELECCIÓN DE VOCES NATIVAS (NEURAL / GOOGLE)
+  // =========================================================================
+  function cargarVocesNativas() {
+    if (!('speechSynthesis' in window)) return;
+    vocesDisponibles = window.speechSynthesis.getVoices();
+
+    if (vocesDisponibles.length === 0) return;
+
+    // Llenar select dinámicamente si existe en el DOM
+    if (inputVoz && inputVoz.tagName === 'SELECT' && inputVoz.options.length <= 1) {
+      inputVoz.innerHTML = '';
+      const vocesEs = vocesDisponibles.filter(v => v.lang.toLowerCase().startsWith('es'));
+      const listaRender = vocesEs.length > 0 ? vocesEs : vocesDisponibles;
+
+      listaRender.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.name;
+        opt.textContent = `${v.name} (${v.lang})`;
+        inputVoz.appendChild(opt);
+      });
+    }
+
+    // Seleccionar la mejor voz disponible (Google Neural / Natural en español)
+    const vozClave = inputVoz?.value || localStorage.getItem('marunity_voz_pref');
+    
+    if (vozClave) {
+      vozSeleccionadaObj = vocesDisponibles.find(v => v.name === vozClave);
+    }
+
+    if (!vozSeleccionadaObj) {
+      vozSeleccionadaObj = vocesDisponibles.find(v => v.lang.startsWith('es') && (v.name.includes('Google') || v.name.includes('Neural') || v.name.includes('Natural')))
+                       || vocesDisponibles.find(v => v.lang.toLowerCase().includes('es-419') || v.lang.toLowerCase().includes('es-mx') || v.lang.toLowerCase().includes('es-ar') || v.lang.toLowerCase().includes('es-us'))
+                       || vocesDisponibles.find(v => v.lang.startsWith('es'))
+                       || vocesDisponibles[0];
+    }
+  }
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = cargarVocesNativas;
+    cargarVocesNativas();
+  }
 
   function verificarBloqueo30Dias() {
     const fechaBloqueo = localStorage.getItem('texyiu_bloqueo_hasta');
@@ -116,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (spanSeg) spanSeg.textContent = `${segundos}s`;
     }, 1000);
   }
+
   function detenerContadorRender() { if (renderTimerInterval) { clearInterval(renderTimerInterval); renderTimerInterval = null; } }
 
   const SONIDOS_URL = {
@@ -226,6 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modalConfirmarTikTok.classList.remove('hidden');
     document.body.style.overflow='hidden';
   }
+
   function cerrarModalPerfil(){ if(!modalConfirmarTikTok) return; modalConfirmarTikTok.classList.add('hidden'); document.body.style.overflow=onboardingScreen&&!onboardingScreen.classList.contains('hidden')?'hidden':''; }
   function mostrarErrorConfirmacion(msg){ detenerContadorRender(); if(!confirmError) return; confirmError.textContent=msg||'Ocurrió un error.'; confirmError.classList.add('visible'); }
   function ocultarErrorConfirmacion(){ if(!confirmError) return; confirmError.textContent=''; confirmError.classList.remove('visible'); }
@@ -260,13 +310,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnConfirmarTikTok) {
     btnConfirmarTikTok.addEventListener('click', async () => {
       if (conexionEnCurso || !perfilPendiente) return;
-
       const usuario = normalizarUsuarioTikTok(perfilPendiente.username);
       if (!usuario) {
         mostrarErrorConfirmacion('No se pudo obtener el usuario.');
         return;
       }
-
       conexionEnCurso = true;
       btnConfirmarTikTok.disabled = true;
       btnConfirmarTikTok.textContent = 'Comprobando sesión...';
@@ -274,11 +322,10 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const clientAuth = window.supabaseAuth;
         if (!clientAuth) throw new Error('No se pudo inicializar la autenticación.');
-
         const sessionRes = await clientAuth.auth.getSession();
         if (sessionRes.error) throw sessionRes.error;
-
         const session = sessionRes?.data?.session;
+
         if (session?.access_token) {
           await conectarTikTok(usuario, true);
           sessionStorage.removeItem('marunity_tiktok_pendiente');
@@ -319,13 +366,11 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(`Bloqueado ${dias} días`);
       }
     }
-    listaMensajes=[]; totalLikesAcumulados=0; likesHoyAcumulados=0; totalRegalosAcumulados=0;
+    listaMensajes=[]; totalLikesAcumulados=0; likesHoyAcumulados=0;
     actualizarBandejaComentarios();
     if(perfilLiveCountLikes) perfilLiveCountLikes.textContent = '0';
     if(statLikesHoy) statLikesHoy.textContent = '0';
     if(perfilLiveCountComentarios) perfilLiveCountComentarios.textContent = '0';
-    if(perfilLiveCountRegalo) perfilLiveCountRegalo.textContent = '0';
-
     if(btnConectar){ btnConectar.disabled=true; btnConectar.textContent='Conectando...'; }
     iniciarContadorRender(estadoConexion, `Iniciando conexión con @${usuario}`);
     setLiveBadge(false,'Conectando...');
@@ -335,6 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const sessionRes = await clientAuth.auth.getSession();
       const token = sessionRes?.data?.session?.access_token || '';
+
       if (!token) throw new Error('Tenés que iniciar sesión con Google para conectar TikTok.');
 
       const respuesta=await fetch(`${SERVER_URL}/api/conectar`,{ 
@@ -365,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
       toast(`Conectado a @${usuario}`,false);
       setLiveBadge(true,`Conectado @${usuario}`);
 
-      reproducirVoz(`Conectado correctamente. Estás usando la voz nativa del navegador. Esperando comentarios.`);
+      reproducirVoz(`Conectado correctamente. Voz nativa activada, esperando comentarios.`);
       
       conectarWebSockets(usuario);
       if(vieneDeConfirmacion){ cerrarModalPerfil(); ocultarOnboarding(); }
@@ -390,11 +436,9 @@ document.addEventListener('DOMContentLoaded', () => {
   (async function continuarDespuesDeGoogle(){
     const usuarioPendiente = sessionStorage.getItem('marunity_tiktok_pendiente');
     if (!usuarioPendiente) return;
-
     try {
       const clientAuth = window.supabaseAuth;
       if (!clientAuth) throw new Error('No se pudo inicializar la autenticación.');
-
       const { data: { session } } = await clientAuth.auth.getSession();
       if (!session) {
         window.location.href = 'login.html';
@@ -417,6 +461,8 @@ document.addEventListener('DOMContentLoaded', () => {
       card.classList.add('active');
       const voiceKey = card.getAttribute('data-voice');
       if (inputVoz) { inputVoz.value = voiceKey; inputVoz.dispatchEvent(new Event('change')); }
+      localStorage.setItem('marunity_voz_pref', voiceKey);
+      cargarVocesNativas();
       guardarAuto();
     });
   });
@@ -441,20 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
       audio.play().catch(()=>{ isPlayingEpico=false; setTimeout(procesarColaEpica,80); });
     } catch(e){ isPlayingEpico=false; setTimeout(procesarColaEpica,80); }
   }
-
-  function onGift(diamondCount){ 
-    const d = parseInt(diamondCount) || 1; 
-    totalRegalosAcumulados += 1;
-    if (perfilLiveCountRegalo) perfilLiveCountRegalo.textContent = totalRegalosAcumulados;
-
-    if(d === 1) encolarSonidoEpico('rosa'); 
-    else if(d < 100) encolarSonidoEpico('chicos'); 
-    else if(d < 500) encolarSonidoEpico('mano'); 
-    else if(d < 1000) encolarSonidoEpico('pistola'); 
-    else if(d < 2000) encolarSonidoEpico('galaxia'); 
-    else encolarSonidoEpico('ballena'); 
-  }
-
+  function onGift(diamondCount){ const d=parseInt(diamondCount)||1; if(d===1) encolarSonidoEpico('rosa'); else if(d<100) encolarSonidoEpico('chicos'); else if(d<500) encolarSonidoEpico('mano'); else if(d<1000) encolarSonidoEpico('pistola'); else if(d<2000) encolarSonidoEpico('galaxia'); else encolarSonidoEpico('ballena'); }
   function sonarComentario(){ const check=document.getElementById('sonido-comentario'); if(check&&check.checked) encolarSonidoEpico('comentario'); }
 
   function getBloqueadasList(){
@@ -500,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function guardarAuto(){
     const cfg={
       velocidad:inputVel?.value||'1', volumen:inputVol?.value||'1', tono:inputTono?.value||'1',
-      voz:inputVoz?.value||'', motorVoz:inputMotorVoz?.value||'nativo',
+      voz:inputVoz?.value||'', motorVoz:'nativo',
       vozOn:switchVoz?.checked??true, overlayOn:switchOverlay?.checked??true,
       sonido_rosa:document.getElementById('sonido-rosa')?.checked??true,
       sonido_chicos:document.getElementById('sonido-chicos')?.checked??true,
@@ -528,20 +561,18 @@ document.addEventListener('DOMContentLoaded', () => {
         else c.classList.remove('active');
       });
     }
-    if(cfg.motorVoz&&inputMotorVoz) inputMotorVoz.value=cfg.motorVoz;
-    if(cfg.vozOn!==undefined&&switchVoz) switchVoz.checked=cfg.vozOn;
-    if(cfg.overlayOn!==undefined&&switchOverlay) switchOverlay.checked=cfg.overlayOn;
+    if(switchVoz) switchVoz.checked=cfg.vozOn??true;
+    if(switchOverlay) switchOverlay.checked=cfg.overlayOn??true;
     ['sonido-rosa','sonido-chicos','sonido-mano','sonido-pistola','sonido-galaxia','sonido-ballena','sonido-comentario'].forEach(id=>{
       const key=id.replace('sonido-','sonido_'); if(cfg[key]!==undefined){ const e=document.getElementById(id); if(e) e.checked=cfg[key]; }
     });
     const footerVoz=document.getElementById('footer-voz'); if(footerVoz&&switchVoz) footerVoz.innerText=switchVoz.checked?'ON':'OFF';
-  } catch(e){}
+  } catch(e){ console.log('Error cargando config:',e); }
 
   if(inputVel) inputVel.addEventListener('input',()=>{ if(labelVel) labelVel.textContent=parseFloat(inputVel.value).toFixed(1)+'x'; guardarAuto(); });
   if(inputVol) inputVol.addEventListener('input',()=>{ if(labelVol) labelVol.textContent=Math.round(getVolumenReal()*100)+'%'; guardarAuto(); });
   if(inputTono) inputTono.addEventListener('input',()=>{ if(labelTono) labelTono.textContent=parseFloat(inputTono.value).toFixed(1); guardarAuto(); });
-  if(inputVoz) inputVoz.addEventListener('change',guardarAuto);
-  if(inputMotorVoz) inputMotorVoz.addEventListener('change',()=>{ detenerTodaVoz(); guardarAuto(); });
+  if(inputVoz) inputVoz.addEventListener('change', () => { cargarVocesNativas(); guardarAuto(); });
   if(switchVoz) switchVoz.addEventListener('change',()=>{ const f=document.getElementById('footer-voz'); if(f) f.innerText=switchVoz.checked?'ON':'OFF'; if(!switchVoz.checked) detenerTodaVoz(); guardarAuto(); });
   if(switchOverlay) switchOverlay.addEventListener('change',()=>{ if(!switchOverlay.checked) detenerTodaVoz(); guardarAuto(); });
   ['sonido-rosa','sonido-chicos','sonido-mano','sonido-pistola','sonido-galaxia','sonido-ballena','sonido-comentario'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change',guardarAuto); });
@@ -551,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if(btnMenu) btnMenu.addEventListener('click',(e)=>{ e.stopPropagation(); if(onboardingScreen&&!onboardingScreen.classList.contains('hidden')) return; abrirSidebar(); });
   if(btnClose) btnClose.addEventListener('click',cerrarSidebar);
   if(sidebarFondo) sidebarFondo.addEventListener('click',cerrarSidebar);
-  
+
   const btnSesion = document.getElementById('btn-sesion');
   const sesionSheet = document.getElementById('sesion-sheet');
   const sesionFondo = document.getElementById('sesion-fondo');
@@ -584,6 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if(btnCerrarSheet) btnCerrarSheet.addEventListener('click', cerrarSesionSheet);
   if(sesionFondo) sesionFondo.addEventListener('click', cerrarSesionSheet);
+
   function abrirPanel(){ if(!overlayPanel||!overlayFondo) return; overlayPanel.classList.remove('hidden'); overlayFondo.classList.remove('hidden'); }
   function cerrarPanel(){ if(!overlayPanel||!overlayFondo) return; overlayPanel.classList.add('hidden'); overlayFondo.classList.add('hidden'); }
   if(btnMic) btnMic.addEventListener('click',(e)=>{ e.stopPropagation(); if(onboardingScreen&&!onboardingScreen.classList.contains('hidden')) return; const estaOculto=overlayPanel.classList.contains('hidden'); if(estaOculto) abrirPanel(); else cerrarPanel(); });
@@ -635,56 +667,50 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function detenerTodaVoz(){
-    elevenLabsQueue=[]; ttsQueue=[]; sonidoEpicoQueue=[];
-    if(currentElevenLabsAudio){ currentElevenLabsAudio.pause(); currentElevenLabsAudio.currentTime=0; currentElevenLabsAudio=null; }
-    isPlayingElevenLabs=false; isPlayingEpico=false;
+    ttsQueue=[]; sonidoEpicoQueue=[];
+    isPlayingEpico=false;
     if('speechSynthesis' in window) speechSynthesis.cancel();
     isSpeaking=false;
   }
 
-  function reproducirVoz(texto, audioUrl=null){
+  // =========================================================================
+  // REPRODUCCIÓN NATIVA 100% CON SPEECH SYNTHESIS API
+  // =========================================================================
+  function reproducirVoz(texto){
     if(switchVoz&&!switchVoz.checked){ detenerTodaVoz(); return; }
     if(switchOverlay&&!switchOverlay.checked){ detenerTodaVoz(); return; }
     if(!texto||!texto.trim()) return;
     if(/^\[.*?\]$/.test(texto.trim())) return;
-    if(contieneBloqueada(texto)) return;
+    if(contieneBloqueada(texto)) { console.log('Bloqueada por filtro:', texto); return; }
 
-    if(audioUrl){
-      try {
-        const audio = new Audio(audioUrl);
-        audio.volume = getVolumenReal();
-        audio.play().catch(e => {
-          if(texto.length>180) texto=texto.substring(0,180);
-          ttsQueue.push(texto); procesarColaNativa();
-        });
-        return;
-      } catch(e) {}
-    }
-
-    const motorSeleccionado=inputMotorVoz?inputMotorVoz.value:'nativo';
-    if(motorSeleccionado==='nativo'){ if(texto.length>180) texto=texto.substring(0,180); ttsQueue.push(texto); procesarColaNativa(); return; }
     if(texto.length>180) texto=texto.substring(0,180);
-    ttsQueue.push(texto); procesarColaNativa();
+    ttsQueue.push(texto); 
+    procesarColaNativa();
   }
 
   function procesarColaNativa(){
-    if(isSpeaking||ttsQueue.length===0) return;
-    isSpeaking=true;
-    const texto=ttsQueue.shift();
-    try{
-      const utter=new SpeechSynthesisUtterance(texto);
-      utter.rate=parseFloat(inputVel?.value)||1;
-      utter.volume=getVolumenReal();
-      utter.pitch=parseFloat(inputTono?.value)||1;
-      const voces=speechSynthesis.getVoices();
-      const vozEs=voces.find(v=>v.lang.toLowerCase().includes('es-419')||v.lang.toLowerCase().includes('es-mx')||v.lang.toLowerCase().includes('es-us'))||voces.find(v=>v.lang.toLowerCase().includes('es'))||voces[0];
-      if(vozEs) utter.voice=vozEs;
-      utter.onend=()=>{ isSpeaking=false; setTimeout(procesarColaNativa,100); };
-      utter.onerror=()=>{ isSpeaking=false; setTimeout(procesarColaNativa,200); };
-      speechSynthesis.speak(utter);
-    } catch(e){ isSpeaking=false; }
+    if(isSpeaking || ttsQueue.length === 0) return;
+    isSpeaking = true;
+    const texto = ttsQueue.shift();
+
+    try {
+      const utter = new SpeechSynthesisUtterance(texto);
+      utter.rate = parseFloat(inputVel?.value) || 1.05;
+      utter.volume = getVolumenReal();
+      utter.pitch = parseFloat(inputTono?.value) || 1.0;
+
+      if (!vozSeleccionadaObj) cargarVocesNativas();
+      if (vozSeleccionadaObj) utter.voice = vozSeleccionadaObj;
+
+      utter.onend = () => { isSpeaking = false; setTimeout(procesarColaNativa, 80); };
+      utter.onerror = (e) => { console.error("Error SpeechSynthesis:", e); isSpeaking = false; setTimeout(procesarColaNativa, 150); };
+      
+      window.speechSynthesis.speak(utter);
+    } catch(e) {
+      console.error("Fallo general al procesar síntesis de voz:", e);
+      isSpeaking = false;
+    }
   }
-  if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged=()=>{ speechSynthesis.getVoices(); }; }
 
   const vistosReciente=new Map();
   function esDuplicadoCliente(usuario,mensaje){ const key=`${usuario}-${mensaje}`; const ahora=Date.now(); if(vistosReciente.has(key)&&ahora-vistosReciente.get(key)<4000) return true; vistosReciente.set(key,ahora); return false; }
@@ -697,9 +723,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (statLikesHoy) { statLikesHoy.textContent = likesHoyAcumulados; }
   }
 
-  // =========================================================================
-  // CONEXIÓN WEBSOCKETS (CON RECEPTOR DE REGALOS ASEGURADO)
-  // =========================================================================
   async function conectarWebSockets(streamer){
     if(socket){ socket.disconnect(); socket=null; }
 
@@ -708,6 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const sessionRes = await clientAuth.auth.getSession();
     const token = sessionRes?.data?.session?.access_token || '';
+
     if (!token) throw new Error('Tenés que iniciar sesión con Google para conectar TikTok.');
 
     socket=io(SERVER_URL,{
@@ -719,78 +743,36 @@ document.addEventListener('DOMContentLoaded', () => {
       reconnectionDelay:2000
     });
 
-    socket.on('connect',()=>{ 
-      const footer=document.getElementById('footer-status-text'); 
-      if(footer){ footer.innerText='● Conectado'; footer.style.color='#4ade80'; } 
-      socket.emit('join-stream-room',streamer); 
-    });
-
-    socket.on('streamer-activo',(user)=>{ 
-      toast(`En vivo: @${user}`,false); 
-      const footer=document.getElementById('footer-status-text'); 
-      if(footer) footer.innerText=`● En vivo: @${user}`; 
-      setLiveBadge(true,`En vivo @${user}`); 
-    });
-
+    socket.on('connect',()=>{ const footer=document.getElementById('footer-status-text'); if(footer){ footer.innerText='● Conectado'; footer.style.color='#4ade80'; } socket.emit('join-stream-room',streamer); });
+    socket.on('streamer-activo',(user)=>{ toast(`En vivo: @${user}`,false); const footer=document.getElementById('footer-status-text'); if(footer) footer.innerText=`● En vivo: @${user}`; setLiveBadge(true,`En vivo @${user}`); });
     socket.on('status',(data)=>{
-      if(data.conectado){ 
-        toast(`LIVE @${data.user}`,false); 
-        if(btnConectar){ btnConectar.textContent=`Conectado @${data.user}`; btnConectar.style.background='#22c55e'; btnConectar.disabled=false; } 
-        setLiveBadge(true,`LIVE @${data.user}`); 
-      } else { 
-        if(data.error&&estadoConexion){ estadoConexion.innerText=`El usuario @${data.user} no está en vivo, reintentando...`; estadoConexion.style.color='#f59e0b'; } 
-      }
+      if(data.conectado){ toast(`LIVE @${data.user}`,false); if(btnConectar){ btnConectar.textContent=`Conectado @${data.user}`; btnConectar.style.background='#22c55e'; btnConectar.disabled=false; } setLiveBadge(true,`LIVE @${data.user}`); }
+      else { if(data.error&&estadoConexion){ estadoConexion.innerText=`El usuario @${data.user} no está en vivo, reintentando...`; estadoConexion.style.color='#f59e0b'; } }
     });
-
-    socket.on('tts-limit-reached',(data)=>{ toast(data.mensaje,true); });
-
+    socket.on('tts-limit-reached',(data)=>{ console.warn(data.mensaje); toast(data.mensaje,true); });
     socket.on('new-chat',(data)=>{
       if(esDuplicadoCliente(data.usuario,data.mensaje)) return;
       listaMensajes.push(data); if(listaMensajes.length>1000) listaMensajes.shift();
       actualizarBandejaComentarios();
-      reproducirVoz(data.textoVoz||data.mensaje, data.audioUrl);
+      reproducirVoz(data.textoVoz||`${data.usuario} dice: ${data.mensaje}`);
       sonarComentario();
     });
-
-    // RECEPTOR DE REGALOS BLINDADO
     socket.on('new-gift',(data)=>{
-      const diamantes = data.diamondCount || data.diamonds || data.value || 1;
+      const diamantes=data.diamondCount||data.diamonds||data.value||1;
       onGift(diamantes);
-      
-      if(data.textoVoz || data.mensaje) {
-        reproducirVoz(data.textoVoz || data.mensaje, data.audioUrl);
-      }
-      
-      listaMensajes.push({
-        usuario: data.usuario || 'Regalo',
-        mensaje: data.mensaje || `Envió un regalo (${diamantes} 💎)`
-      });
+      if(data.textoVoz||data.mensaje) reproducirVoz(data.textoVoz||data.mensaje);
+      listaMensajes.push({usuario:data.usuario||'Regalo',mensaje:data.mensaje});
       actualizarBandejaComentarios();
     });
-
-    socket.on('gift',(data)=>{
-      const diamantes = data.diamondCount || data.diamonds || data.value || 1;
-      onGift(diamantes);
-    });
-
+    socket.on('gift',(data)=>{ onGift(data.diamondCount||data.diamonds||data.value||1); });
     socket.on('new-like',(data)=>{ const count = data?.likeCount || data?.count || data?.totalLikeCount || data?.diamondCount || 1; incrementarLikes(count); });
     socket.on('like',(data)=>{ const count = data?.likeCount || data?.count || data?.totalLikeCount || data?.diamondCount || 1; incrementarLikes(count); });
-    
-    socket.on('new-follow',(data)=>{ 
-      if(data.textoVoz) reproducirVoz(data.textoVoz, data.audioUrl); 
-      listaMensajes.push({
-        usuario: data.usuario || 'Seguidor',
-        mensaje: data.mensaje || 'Comenzó a seguirte'
-      });
-      actualizarBandejaComentarios();
-    });
-
+    socket.on('new-follow',(data)=>{ if(data.textoVoz) reproducirVoz(data.textoVoz); });
     socket.on('stream-ended',(data)=>{
       toast(data.message||'Live finalizado.');
       if(btnConectar){ btnConectar.textContent='Verificar'; btnConectar.style.background=''; btnConectar.disabled=false; }
       const footer=document.getElementById('footer-status-text'); if(footer){ footer.innerText='● Live terminado'; footer.style.color='#ff7a7a'; } setLiveBadge(false,'Live terminado');
     });
-
     socket.on('disconnect',()=>{ setLiveBadge(false,'Desconectado'); });
   }
 
@@ -842,6 +824,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ===== STARTUP - MARUNITY =====
   const startupEl = document.getElementById('marunity-startup');
   const startupBar = document.getElementById('startup-progress-bar');
   const startupText = document.getElementById('startup-progress-text');
@@ -868,6 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function runStartup() {
     if (!startupEl) return;
+
     setStartupProgress(5, 'Verificando servicios...');
 
     setStartupCheck('startup-google', 'loading', 'Verificando...');
