@@ -179,10 +179,8 @@
       <h3>💬 Soporte y Contacto</h3>
       <p class="muted">¿Tenés problemas? Estamos para ayudarte.</p>
       <div class="contact-buttons">
-  <a href="mailto:contacto@marunity.com" class="contact-btn">📩 contacto@marunity.com</a>
-  <button type="button" class="contact-btn" id="btn-whatsapp-soporte">💚 WhatsApp Soporte</button>
-</div>
-
+        <a href="mailto:contacto@marunity.com" class="contact-btn">📩 contacto@marunity.com</a>
+        <button type="button" class="contact-btn" id="btn-whatsapp-soporte">💚 WhatsApp Soporte</button>
       </div>
     </div>
     <div class="card" id="card-redes-inicio">
@@ -401,7 +399,8 @@
     <p class="sesion-nota">Si cerrás sesión, volvés a la pantalla de login.</p>
   </div>
 </div>
-  <!-- PANTALLA DE PREPARACIÓN MARUNITY -->
+
+<!-- PANTALLA DE PREPARACIÓN MARUNITY -->
 <div id="marunity-startup" class="marunity-startup">
 
   <div class="startup-card">
@@ -428,8 +427,8 @@
 
       <div class="startup-check" id="startup-google">
         <div class="startup-check-info">
-          <strong>Cuenta Google</strong>
-          <span>Verificando sesión...</span>
+          <strong>Credenciales de acceso</strong>
+          <span>Verificando credenciales...</span>
         </div>
         <span class="startup-status">Pendiente</span>
       </div>
@@ -445,7 +444,7 @@
       <div class="startup-check" id="startup-server">
         <div class="startup-check-info">
           <strong>Servidor MarUnity</strong>
-          <span>Comprobando disponibilidad...</span>
+          <span>Buscando funciones...</span>
         </div>
         <span class="startup-status">Pendiente</span>
       </div>
@@ -495,7 +494,7 @@
       id="btn-startup-continue"
       class="startup-continue"
       type="button"
-      disabled
+      style="display: none;"
     >
       CONTINUAR
     </button>
@@ -523,7 +522,6 @@
     var KEY = 'marunity_plan_closed_at_v4';
     var UN_DIA = 24 * 60 * 60 * 1000;
 
-    // ESTO ES SOLO PARA PROBAR: si entras con ?reset-plan, borra el contador
     if (window.location.search.indexOf('reset-plan') !== -1) {
       try { localStorage.removeItem(KEY); } catch (e) {}
     }
@@ -551,7 +549,6 @@
       } catch (e) {}
     });
   })();
-  
 </script>
 </body>
 </html>
