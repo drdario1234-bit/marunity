@@ -1,15 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('TexYiu LIVE Tex - V9 RED BLACK (NATIVE SPEECH SYNTHESIS NEURAL OPTIMIZED)');
+  console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Likes Fixed - High Quality Native TTS)');
 
   const SERVER_URL = 'https://bot-tiktok-tslw.onrender.com';
   let socket = null;
   let listaMensajes = [];
 
-  // COLA NATIVA Y SONIDOS
-  let ttsQueue = []; 
-  let isSpeaking = false;
-  let sonidoEpicoQueue = []; 
-  let isPlayingEpico = false;
+  let ttsQueue = []; let isSpeaking = false;
+  let elevenLabsQueue = []; let isPlayingElevenLabs = false; let currentElevenLabsAudio = null;
+  let sonidoEpicoQueue = []; let isPlayingEpico = false;
 
   // VOCES NATIVAS DEL NAVEGADOR
   let vocesDisponibles = [];
@@ -40,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isNaN(v)) return 1;
     return Math.min(1, Math.max(0, v));
   }
-
   const inputBloq = document.getElementById('palabras-bloqueadas');
   const inputVoz = document.getElementById('select-voz');
   const inputMotorVoz = document.getElementById('select-motor-voz');
@@ -88,40 +85,22 @@ document.addEventListener('DOMContentLoaded', () => {
   let renderTimerInterval = null;
 
   // =========================================================================
-  // SISTEMA DE CARGA Y SELECCIÓN DE VOCES NATIVAS (NEURAL / GOOGLE)
+  // CARGA DE VOCES NATIVAS DE ALTA CALIDAD (GOOGLE NEURAL / NATURAL EN ESPAÑOL)
   // =========================================================================
   function cargarVocesNativas() {
     if (!('speechSynthesis' in window)) return;
     vocesDisponibles = window.speechSynthesis.getVoices();
+    if (!vocesDisponibles || vocesDisponibles.length === 0) return;
 
-    if (vocesDisponibles.length === 0) return;
+    // Buscar una voz de alta calidad (Google, Neural o Natural) en español
+    const vozGoogleEs = vocesDisponibles.find(v => v.lang.toLowerCase().startsWith('es') && (v.name.includes('Google') || v.name.includes('Neural') || v.name.includes('Natural') || v.name.includes('espacio')))
+                      || vocesDisponibles.find(v => v.lang.toLowerCase().includes('es-419') || v.lang.toLowerCase().includes('es-us') || v.lang.toLowerCase().includes('es-mx') || v.lang.toLowerCase().includes('es-ar') || v.lang.toLowerCase().includes('es-es'))
+                      || vocesDisponibles.find(v => v.lang.toLowerCase().startsWith('es'))
+                      || vocesDisponibles[0];
 
-    // Llenar select dinámicamente si existe en el DOM
-    if (inputVoz && inputVoz.tagName === 'SELECT' && inputVoz.options.length <= 1) {
-      inputVoz.innerHTML = '';
-      const vocesEs = vocesDisponibles.filter(v => v.lang.toLowerCase().startsWith('es'));
-      const listaRender = vocesEs.length > 0 ? vocesEs : vocesDisponibles;
-
-      listaRender.forEach(v => {
-        const opt = document.createElement('option');
-        opt.value = v.name;
-        opt.textContent = `${v.name} (${v.lang})`;
-        inputVoz.appendChild(opt);
-      });
-    }
-
-    // Seleccionar la mejor voz disponible (Google Neural / Natural en español)
-    const vozClave = inputVoz?.value || localStorage.getItem('marunity_voz_pref');
-    
-    if (vozClave) {
-      vozSeleccionadaObj = vocesDisponibles.find(v => v.name === vozClave);
-    }
-
-    if (!vozSeleccionadaObj) {
-      vozSeleccionadaObj = vocesDisponibles.find(v => v.lang.startsWith('es') && (v.name.includes('Google') || v.name.includes('Neural') || v.name.includes('Natural')))
-                       || vocesDisponibles.find(v => v.lang.toLowerCase().includes('es-419') || v.lang.toLowerCase().includes('es-mx') || v.lang.toLowerCase().includes('es-ar') || v.lang.toLowerCase().includes('es-us'))
-                       || vocesDisponibles.find(v => v.lang.startsWith('es'))
-                       || vocesDisponibles[0];
+    if (vozGoogleEs) {
+      vozSeleccionadaObj = vozGoogleEs;
+      console.log('Voz nativa seleccionada:', vozGoogleEs.name, `(${vozGoogleEs.lang})`);
     }
   }
 
@@ -164,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (spanSeg) spanSeg.textContent = `${segundos}s`;
     }, 1000);
   }
-
   function detenerContadorRender() { if (renderTimerInterval) { clearInterval(renderTimerInterval); renderTimerInterval = null; } }
 
   const SONIDOS_URL = {
@@ -215,11 +193,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function mostrarOnboarding(){ if(!onboardingScreen) return; onboardingScreen.classList.remove('hidden'); document.body.style.overflow='hidden'; setTimeout(()=>{ inputOnboarding?.focus(); },100); }
   function ocultarOnboarding(){ if(!onboardingScreen) return; onboardingScreen.classList.add('hidden'); document.body.style.overflow=''; }
   function cuentaTikTokConfirmada(){ const usuario=localStorage.getItem('texyiu_tiktok_user_confirmado')||localStorage.getItem('tiktok_user_confirmado'); return !!usuario; }
-
-  if(cuentaTikTokConfirmada()){
-    const uGuardado = localStorage.getItem('texyiu_tiktok_user_confirmado')||'';
-    if(inputUser) inputUser.value = uGuardado;
-  }
+if(cuentaTikTokConfirmada()){
+  const uGuardado = localStorage.getItem('texyiu_tiktok_user_confirmado')||'';
+  if(inputUser) inputUser.value = uGuardado;
+}
 
   async function verificarPerfilTikTok(usuario){
     if (!navigator.onLine) {
@@ -275,7 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
     modalConfirmarTikTok.classList.remove('hidden');
     document.body.style.overflow='hidden';
   }
-
   function cerrarModalPerfil(){ if(!modalConfirmarTikTok) return; modalConfirmarTikTok.classList.add('hidden'); document.body.style.overflow=onboardingScreen&&!onboardingScreen.classList.contains('hidden')?'hidden':''; }
   function mostrarErrorConfirmacion(msg){ detenerContadorRender(); if(!confirmError) return; confirmError.textContent=msg||'Ocurrió un error.'; confirmError.classList.add('visible'); }
   function ocultarErrorConfirmacion(){ if(!confirmError) return; confirmError.textContent=''; confirmError.classList.remove('visible'); }
@@ -307,43 +283,56 @@ document.addEventListener('DOMContentLoaded', () => {
   if(btnVolverTikTok) btnVolverTikTok.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
   if(modalTikTokBackdrop) modalTikTokBackdrop.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
 
-  if (btnConfirmarTikTok) {
-    btnConfirmarTikTok.addEventListener('click', async () => {
-      if (conexionEnCurso || !perfilPendiente) return;
-      const usuario = normalizarUsuarioTikTok(perfilPendiente.username);
-      if (!usuario) {
-        mostrarErrorConfirmacion('No se pudo obtener el usuario.');
-        return;
-      }
-      conexionEnCurso = true;
-      btnConfirmarTikTok.disabled = true;
-      btnConfirmarTikTok.textContent = 'Comprobando sesión...';
+ if (btnConfirmarTikTok) {
+  btnConfirmarTikTok.addEventListener('click', async () => {
+    if (conexionEnCurso || !perfilPendiente) return;
 
-      try {
-        const clientAuth = window.supabaseAuth;
-        if (!clientAuth) throw new Error('No se pudo inicializar la autenticación.');
-        const sessionRes = await clientAuth.auth.getSession();
-        if (sessionRes.error) throw sessionRes.error;
-        const session = sessionRes?.data?.session;
+    const usuario = normalizarUsuarioTikTok(perfilPendiente.username);
 
-        if (session?.access_token) {
-          await conectarTikTok(usuario, true);
-          sessionStorage.removeItem('marunity_tiktok_pendiente');
-        } else {
-          sessionStorage.setItem('marunity_tiktok_pendiente', usuario);
-          btnConfirmarTikTok.textContent = 'Continuando con Google...';
-          window.location.href = 'login.html';
-        }
-      } catch (error) {
-        console.error('Error al confirmar TikTok:', error);
-        mostrarErrorConfirmacion(error?.message || 'No se pudo continuar.');
-        btnConfirmarTikTok.disabled = false;
-        btnConfirmarTikTok.textContent = 'Confirmar';
-      } finally {
-        conexionEnCurso = false;
+    if (!usuario) {
+      mostrarErrorConfirmacion('No se pudo obtener el usuario.');
+      return;
+    }
+
+    conexionEnCurso = true;
+    btnConfirmarTikTok.disabled = true;
+    btnConfirmarTikTok.textContent = 'Comprobando sesión...';
+
+    try {
+      const clientAuth = window.supabaseAuth;
+
+      if (!clientAuth) {
+        throw new Error('No se pudo inicializar la autenticación.');
       }
-    });
-  }
+
+      const sessionRes = await clientAuth.auth.getSession();
+
+      if (sessionRes.error) {
+        throw sessionRes.error;
+      }
+
+      const session = sessionRes?.data?.session;
+
+      if (session?.access_token) {
+        await conectarTikTok(usuario, true);
+        sessionStorage.removeItem('marunity_tiktok_pendiente');
+      } else {
+        sessionStorage.setItem('marunity_tiktok_pendiente', usuario);
+        btnConfirmarTikTok.textContent = 'Continuando con Google...';
+        window.location.href = 'login.html';
+      }
+
+    } catch (error) {
+      console.error('Error al confirmar TikTok:', error);
+      mostrarErrorConfirmacion(error?.message || 'No se pudo continuar.');
+
+      btnConfirmarTikTok.disabled = false;
+      btnConfirmarTikTok.textContent = 'Confirmar';
+    } finally {
+      conexionEnCurso = false;
+    }
+  });
+}
 
   function actualizarPerfilLiveConectado(datos) {
     if (perfilLiveAvatar && datos.profilePicture) { perfilLiveAvatar.src = datos.profilePicture; perfilLiveAvatar.onerror = () => { perfilLiveAvatar.onerror = null; perfilLiveAvatar.src = 'logo.png'; }; }
@@ -351,6 +340,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (perfilLiveUsername && datos.username) { perfilLiveUsername.textContent = '@' + normalizarUsuarioTikTok(datos.username); }
   }
 
+  // =========================================================================
+  // CONEXIÓN AL LIVE (INCLUYE TOKEN DE SUPABASE PARA AUTENTICACIÓN)
+  // =========================================================================
   async function conectarTikTok(usuario, vieneDeConfirmacion=false){
     usuario=normalizarUsuarioTikTok(usuario);
     if(!usuario) throw new Error('Usuario TikTok inválido.');
@@ -376,12 +368,17 @@ document.addEventListener('DOMContentLoaded', () => {
     setLiveBadge(false,'Conectando...');
     try{
       const clientAuth = window.supabaseAuth;
-      if (!clientAuth) throw new Error('No se pudo inicializar la autenticación de Google.');
+
+      if (!clientAuth) {
+        throw new Error('No se pudo inicializar la autenticación de Google.');
+      }
 
       const sessionRes = await clientAuth.auth.getSession();
       const token = sessionRes?.data?.session?.access_token || '';
 
-      if (!token) throw new Error('Tenés que iniciar sesión con Google para conectar TikTok.');
+      if (!token) {
+        throw new Error('Tenés que iniciar sesión con Google para conectar TikTok.');
+      }
 
       const respuesta=await fetch(`${SERVER_URL}/api/conectar`,{ 
         method:'POST', 
@@ -403,6 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hasta.setDate(hasta.getDate() + 30);
         localStorage.setItem('texyiu_bloqueo_hasta', hasta.toISOString());
         localStorage.setItem('texyiu_bloqueo_user', usuario);
+        console.log('🔒 Bloqueo guardado hasta:', hasta);
       }
       if(inputUser) inputUser.value=usuario;
       if(inputOnboarding) inputOnboarding.value=usuario;
@@ -411,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
       toast(`Conectado a @${usuario}`,false);
       setLiveBadge(true,`Conectado @${usuario}`);
 
-      reproducirVoz(`Conectado correctamente. Voz nativa activada, esperando comentarios.`);
+      reproducirVoz(`Conectado correctamente. Estás usando la voz nativa del navegador, Esperando comentarios.`);
       
       conectarWebSockets(usuario);
       if(vieneDeConfirmacion){ cerrarModalPerfil(); ocultarOnboarding(); }
@@ -433,25 +431,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  (async function continuarDespuesDeGoogle(){
-    const usuarioPendiente = sessionStorage.getItem('marunity_tiktok_pendiente');
-    if (!usuarioPendiente) return;
-    try {
-      const clientAuth = window.supabaseAuth;
-      if (!clientAuth) throw new Error('No se pudo inicializar la autenticación.');
-      const { data: { session } } = await clientAuth.auth.getSession();
-      if (!session) {
-        window.location.href = 'login.html';
-        return;
-      }
-      await conectarTikTok(usuarioPendiente, true);
-      sessionStorage.removeItem('marunity_tiktok_pendiente');
-    } catch (error) {
-      console.error('Error al continuar después de Google:', error);
-      toast(error?.message || 'No se pudo continuar la conexión.', true);
-    }
-  })();
+(async function continuarDespuesDeGoogle(){
 
+  const usuarioPendiente = sessionStorage.getItem('marunity_tiktok_pendiente');
+
+  if (!usuarioPendiente) return;
+
+  try {
+    const clientAuth = window.supabaseAuth;
+
+    if (!clientAuth) {
+      throw new Error('No se pudo inicializar la autenticación.');
+    }
+
+    const { data: { session } } = await clientAuth.auth.getSession();
+
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    await conectarTikTok(usuarioPendiente, true);
+
+    sessionStorage.removeItem('marunity_tiktok_pendiente');
+
+  } catch (error) {
+    console.error('Error al continuar después de Google:', error);
+    toast(error?.message || 'No se pudo continuar la conexión.', true);
+  }
+
+})();
   if(btnConectar) btnConectar.addEventListener('click',()=>{ iniciarVerificacionTikTok(inputUser?.value||'','panel'); });
 
   const voiceCards = document.querySelectorAll('.voice-card:not(.locked)');
@@ -461,8 +470,6 @@ document.addEventListener('DOMContentLoaded', () => {
       card.classList.add('active');
       const voiceKey = card.getAttribute('data-voice');
       if (inputVoz) { inputVoz.value = voiceKey; inputVoz.dispatchEvent(new Event('change')); }
-      localStorage.setItem('marunity_voz_pref', voiceKey);
-      cargarVocesNativas();
       guardarAuto();
     });
   });
@@ -533,7 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function guardarAuto(){
     const cfg={
       velocidad:inputVel?.value||'1', volumen:inputVol?.value||'1', tono:inputTono?.value||'1',
-      voz:inputVoz?.value||'', motorVoz:'nativo',
+      voz:inputVoz?.value||'', motorVoz:inputMotorVoz?.value||'nativo',
       vozOn:switchVoz?.checked??true, overlayOn:switchOverlay?.checked??true,
       sonido_rosa:document.getElementById('sonido-rosa')?.checked??true,
       sonido_chicos:document.getElementById('sonido-chicos')?.checked??true,
@@ -561,8 +568,9 @@ document.addEventListener('DOMContentLoaded', () => {
         else c.classList.remove('active');
       });
     }
-    if(switchVoz) switchVoz.checked=cfg.vozOn??true;
-    if(switchOverlay) switchOverlay.checked=cfg.overlayOn??true;
+    if(cfg.motorVoz&&inputMotorVoz) inputMotorVoz.value=cfg.motorVoz;
+    if(cfg.vozOn!==undefined&&switchVoz) switchVoz.checked=cfg.vozOn;
+    if(cfg.overlayOn!==undefined&&switchOverlay) switchOverlay.checked=cfg.overlayOn;
     ['sonido-rosa','sonido-chicos','sonido-mano','sonido-pistola','sonido-galaxia','sonido-ballena','sonido-comentario'].forEach(id=>{
       const key=id.replace('sonido-','sonido_'); if(cfg[key]!==undefined){ const e=document.getElementById(id); if(e) e.checked=cfg[key]; }
     });
@@ -572,7 +580,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if(inputVel) inputVel.addEventListener('input',()=>{ if(labelVel) labelVel.textContent=parseFloat(inputVel.value).toFixed(1)+'x'; guardarAuto(); });
   if(inputVol) inputVol.addEventListener('input',()=>{ if(labelVol) labelVol.textContent=Math.round(getVolumenReal()*100)+'%'; guardarAuto(); });
   if(inputTono) inputTono.addEventListener('input',()=>{ if(labelTono) labelTono.textContent=parseFloat(inputTono.value).toFixed(1); guardarAuto(); });
-  if(inputVoz) inputVoz.addEventListener('change', () => { cargarVocesNativas(); guardarAuto(); });
+  if(inputVoz) inputVoz.addEventListener('change',guardarAuto);
+  if(inputMotorVoz) inputMotorVoz.addEventListener('change',()=>{ detenerTodaVoz(); guardarAuto(); });
   if(switchVoz) switchVoz.addEventListener('change',()=>{ const f=document.getElementById('footer-voz'); if(f) f.innerText=switchVoz.checked?'ON':'OFF'; if(!switchVoz.checked) detenerTodaVoz(); guardarAuto(); });
   if(switchOverlay) switchOverlay.addEventListener('change',()=>{ if(!switchOverlay.checked) detenerTodaVoz(); guardarAuto(); });
   ['sonido-rosa','sonido-chicos','sonido-mano','sonido-pistola','sonido-galaxia','sonido-ballena','sonido-comentario'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change',guardarAuto); });
@@ -582,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if(btnMenu) btnMenu.addEventListener('click',(e)=>{ e.stopPropagation(); if(onboardingScreen&&!onboardingScreen.classList.contains('hidden')) return; abrirSidebar(); });
   if(btnClose) btnClose.addEventListener('click',cerrarSidebar);
   if(sidebarFondo) sidebarFondo.addEventListener('click',cerrarSidebar);
-
+  
   const btnSesion = document.getElementById('btn-sesion');
   const sesionSheet = document.getElementById('sesion-sheet');
   const sesionFondo = document.getElementById('sesion-fondo');
@@ -615,7 +624,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if(btnCerrarSheet) btnCerrarSheet.addEventListener('click', cerrarSesionSheet);
   if(sesionFondo) sesionFondo.addEventListener('click', cerrarSesionSheet);
-
   function abrirPanel(){ if(!overlayPanel||!overlayFondo) return; overlayPanel.classList.remove('hidden'); overlayFondo.classList.remove('hidden'); }
   function cerrarPanel(){ if(!overlayPanel||!overlayFondo) return; overlayPanel.classList.add('hidden'); overlayFondo.classList.add('hidden'); }
   if(btnMic) btnMic.addEventListener('click',(e)=>{ e.stopPropagation(); if(onboardingScreen&&!onboardingScreen.classList.contains('hidden')) return; const estaOculto=overlayPanel.classList.contains('hidden'); if(estaOculto) abrirPanel(); else cerrarPanel(); });
@@ -667,49 +675,81 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function detenerTodaVoz(){
-    ttsQueue=[]; sonidoEpicoQueue=[];
-    isPlayingEpico=false;
+    elevenLabsQueue=[]; ttsQueue=[]; sonidoEpicoQueue=[];
+    if(currentElevenLabsAudio){ currentElevenLabsAudio.pause(); currentElevenLabsAudio.currentTime=0; currentElevenLabsAudio=null; }
+    isPlayingElevenLabs=false; isPlayingEpico=false;
     if('speechSynthesis' in window) speechSynthesis.cancel();
     isSpeaking=false;
   }
 
-  // =========================================================================
-  // REPRODUCCIÓN NATIVA 100% CON SPEECH SYNTHESIS API
-  // =========================================================================
-  function reproducirVoz(texto){
+  // REPRODUCCIÓN DE VOZ CON GOOGLE TTS (URL O SPEECH SYNTHESIS NATIVO DE ALTA CALIDAD)
+  function reproducirVoz(texto, audioUrl=null){
     if(switchVoz&&!switchVoz.checked){ detenerTodaVoz(); return; }
     if(switchOverlay&&!switchOverlay.checked){ detenerTodaVoz(); return; }
     if(!texto||!texto.trim()) return;
     if(/^\[.*?\]$/.test(texto.trim())) return;
-    if(contieneBloqueada(texto)) { console.log('Bloqueada por filtro:', texto); return; }
+    if(contieneBloqueada(texto)) { console.log('Bloqueada:', texto); return; }
 
+    if(audioUrl){
+      try {
+        const audio = new Audio(audioUrl);
+        audio.volume = getVolumenReal();
+        audio.play().catch(e => {
+          console.warn("Fallo al reproducir audio de Google TTS URL, usando voz nativa:", e);
+          if(texto.length>180) texto=texto.substring(0,180);
+          ttsQueue.push(texto); procesarColaNativa();
+        });
+        return;
+      } catch(e) {
+        console.error("Error al instanciar audio de Google TTS URL:", e);
+      }
+    }
+
+    const motorSeleccionado=inputMotorVoz?inputMotorVoz.value:'nativo';
+    if(motorSeleccionado==='nativo'){ if(texto.length>180) texto=texto.substring(0,180); ttsQueue.push(texto); procesarColaNativa(); return; }
     if(texto.length>180) texto=texto.substring(0,180);
-    ttsQueue.push(texto); 
-    procesarColaNativa();
+    ttsQueue.push(texto); procesarColaNativa();
+  }
+
+  function procesarColaElevenLabs(){
+    const motorSeleccionado=inputMotorVoz?inputMotorVoz.value:'nativo';
+    if(motorSeleccionado==='nativo'||(switchVoz&&!switchVoz.checked)){ detenerTodaVoz(); return; }
+    if(isPlayingElevenLabs||elevenLabsQueue.length===0) return;
+    isPlayingElevenLabs=true;
+    const base64Data=elevenLabsQueue.shift();
+    try{
+      currentElevenLabsAudio=new Audio(`data:audio/mp3;base64,${base64Data}`);
+      currentElevenLabsAudio.volume=getVolumenReal();
+      currentElevenLabsAudio.onended=()=>{ isPlayingElevenLabs=false; currentElevenLabsAudio=null; setTimeout(procesarColaElevenLabs,100); };
+      currentElevenLabsAudio.onerror=()=>{ isPlayingElevenLabs=false; currentElevenLabsAudio=null; setTimeout(procesarColaElevenLabs,200); };
+      currentElevenLabsAudio.play().catch(()=>{ isPlayingElevenLabs=false; currentElevenLabsAudio=null; setTimeout(procesarColaElevenLabs,200); });
+    } catch(err){ isPlayingElevenLabs=false; currentElevenLabsAudio=null; setTimeout(procesarColaElevenLabs,200); }
   }
 
   function procesarColaNativa(){
-    if(isSpeaking || ttsQueue.length === 0) return;
-    isSpeaking = true;
-    const texto = ttsQueue.shift();
-
-    try {
-      const utter = new SpeechSynthesisUtterance(texto);
-      utter.rate = parseFloat(inputVel?.value) || 1.05;
-      utter.volume = getVolumenReal();
-      utter.pitch = parseFloat(inputTono?.value) || 1.0;
-
-      if (!vozSeleccionadaObj) cargarVocesNativas();
-      if (vozSeleccionadaObj) utter.voice = vozSeleccionadaObj;
-
-      utter.onend = () => { isSpeaking = false; setTimeout(procesarColaNativa, 80); };
-      utter.onerror = (e) => { console.error("Error SpeechSynthesis:", e); isSpeaking = false; setTimeout(procesarColaNativa, 150); };
+    if(isSpeaking||ttsQueue.length===0) return;
+    isSpeaking=true;
+    const texto=ttsQueue.shift();
+    try{
+      const utter=new SpeechSynthesisUtterance(texto);
+      utter.rate=parseFloat(inputVel?.value)||1.05;
+      utter.volume=getVolumenReal();
+      utter.pitch=parseFloat(inputTono?.value)||1;
       
-      window.speechSynthesis.speak(utter);
-    } catch(e) {
-      console.error("Fallo general al procesar síntesis de voz:", e);
-      isSpeaking = false;
-    }
+      // Asignar voz nativa seleccionada (priorizando Google / Neural en español)
+      if (!vozSeleccionadaObj) cargarVocesNativas();
+      if (vozSeleccionadaObj) {
+        utter.voice = vozSeleccionadaObj;
+      } else {
+        const voces = speechSynthesis.getVoices();
+        const vozEs = voces.find(v=>v.lang.toLowerCase().includes('es-419')||v.lang.toLowerCase().includes('es-mx')||v.lang.toLowerCase().includes('es-us'))||voces.find(v=>v.lang.toLowerCase().includes('es'))||voces[0];
+        if(vozEs) utter.voice=vozEs;
+      }
+
+      utter.onend=()=>{ isSpeaking=false; setTimeout(procesarColaNativa,80); };
+      utter.onerror=()=>{ isSpeaking=false; setTimeout(procesarColaNativa,150); };
+      speechSynthesis.speak(utter);
+    } catch(e){ isSpeaking=false; }
   }
 
   const vistosReciente=new Map();
@@ -723,16 +763,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (statLikesHoy) { statLikesHoy.textContent = likesHoyAcumulados; }
   }
 
+  // =========================================================================
+  // CONEXIÓN WEBSOCKETS (ENVÍA TOKEN DE SUPABASE AL SERVIDOR)
+  // =========================================================================
   async function conectarWebSockets(streamer){
     if(socket){ socket.disconnect(); socket=null; }
 
-    const clientAuth = window.supabaseAuth;
-    if (!clientAuth) throw new Error('No se pudo inicializar la autenticación de Google.');
+      const clientAuth = window.supabaseAuth;
 
-    const sessionRes = await clientAuth.auth.getSession();
-    const token = sessionRes?.data?.session?.access_token || '';
+      if (!clientAuth) {
+        throw new Error('No se pudo inicializar la autenticación de Google.');
+      }
 
-    if (!token) throw new Error('Tenés que iniciar sesión con Google para conectar TikTok.');
+      const sessionRes = await clientAuth.auth.getSession();
+      const token = sessionRes?.data?.session?.access_token || '';
+
+      if (!token) {
+        throw new Error('Tenés que iniciar sesión con Google para conectar TikTok.');
+      }
 
     socket=io(SERVER_URL,{
       auth: { token: token },
@@ -754,20 +802,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if(esDuplicadoCliente(data.usuario,data.mensaje)) return;
       listaMensajes.push(data); if(listaMensajes.length>1000) listaMensajes.shift();
       actualizarBandejaComentarios();
-      reproducirVoz(data.textoVoz||`${data.usuario} dice: ${data.mensaje}`);
+      reproducirVoz(data.textoVoz||data.mensaje, data.audioUrl);
       sonarComentario();
     });
     socket.on('new-gift',(data)=>{
       const diamantes=data.diamondCount||data.diamonds||data.value||1;
       onGift(diamantes);
-      if(data.textoVoz||data.mensaje) reproducirVoz(data.textoVoz||data.mensaje);
+      if(data.textoVoz||data.mensaje) reproducirVoz(data.textoVoz||data.mensaje, data.audioUrl);
       listaMensajes.push({usuario:data.usuario||'Regalo',mensaje:data.mensaje});
       actualizarBandejaComentarios();
     });
     socket.on('gift',(data)=>{ onGift(data.diamondCount||data.diamonds||data.value||1); });
     socket.on('new-like',(data)=>{ const count = data?.likeCount || data?.count || data?.totalLikeCount || data?.diamondCount || 1; incrementarLikes(count); });
     socket.on('like',(data)=>{ const count = data?.likeCount || data?.count || data?.totalLikeCount || data?.diamondCount || 1; incrementarLikes(count); });
-    socket.on('new-follow',(data)=>{ if(data.textoVoz) reproducirVoz(data.textoVoz); });
+    socket.on('new-follow',(data)=>{ if(data.textoVoz) reproducirVoz(data.textoVoz, data.audioUrl); });
     socket.on('stream-ended',(data)=>{
       toast(data.message||'Live finalizado.');
       if(btnConectar){ btnConectar.textContent='Verificar'; btnConectar.style.background=''; btnConectar.disabled=false; }
@@ -811,7 +859,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnEditarUsuario.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
+      
       navegarA('live');
+      
       setTimeout(() => {
         const inputLive = document.getElementById('input-tiktok-user');
         if (inputLive) {
@@ -824,103 +874,110 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ===== STARTUP - MARUNITY =====
-  const startupEl = document.getElementById('marunity-startup');
-  const startupBar = document.getElementById('startup-progress-bar');
-  const startupText = document.getElementById('startup-progress-text');
-  const startupTitle = document.getElementById('startup-title');
-  const startupDesc = document.getElementById('startup-description');
+// ===== STARTUP - MARUNITY =====
+const startupEl = document.getElementById('marunity-startup');
+const startupBar = document.getElementById('startup-progress-bar');
+const startupText = document.getElementById('startup-progress-text');
+const startupTitle = document.getElementById('startup-title');
+const startupDesc = document.getElementById('startup-description');
 
-  function setStartupCheck(id, estado, texto) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.classList.remove('loading', 'success', 'error');
-    if (estado) el.classList.add(estado);
-    const status = el.querySelector('.startup-status');
-    if (status) status.textContent = texto || estado;
-  }
+function setStartupCheck(id, estado, texto) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('loading', 'success', 'error');
+  if (estado) el.classList.add(estado);
+  const status = el.querySelector('.startup-status');
+  if (status) status.textContent = texto || estado;
+}
 
-  function setStartupProgress(pct, texto) {
-    if (startupBar) startupBar.style.width = pct + '%';
-    if (startupText) startupText.textContent = texto || '';
-  }
+function setStartupProgress(pct, texto) {
+  if (startupBar) startupBar.style.width = pct + '%';
+  if (startupText) startupText.textContent = texto || '';
+}
 
-  function esperar(ms) {
-    return new Promise(res => setTimeout(res, ms));
-  }
+function esperar(ms) {
+  return new Promise(res => setTimeout(res, ms));
+}
 
-  async function runStartup() {
-    if (!startupEl) return;
+async function runStartup() {
+  if (!startupEl) return;
 
-    setStartupProgress(5, 'Verificando servicios...');
+  setStartupProgress(5, 'Verificando servicios...');
 
-    setStartupCheck('startup-google', 'loading', 'Verificando...');
-    await esperar(600);
+  // 1. GOOGLE
+  setStartupCheck('startup-google', 'loading', 'Verificando...');
+  await esperar(600);
 
-    try {
-      const clientAuth = window.supabaseAuth;
-      const { data } = await clientAuth.auth.getSession();
-      if (data?.session) {
-        setStartupCheck('startup-google', 'success', 'Conectado');
-      } else {
-        setStartupCheck('startup-google', 'error', 'Sin sesión');
-        await esperar(800);
-        window.location.href = 'login.html';
-        return;
-      }
-    } catch(e) {
-      setStartupCheck('startup-google', 'error', 'Error');
-    }
-    setStartupProgress(30, 'Cuenta verificada...');
-    await esperar(400);
-
-    setStartupCheck('startup-tiktok', 'loading', 'Recuperando...');
-    await esperar(600);
-    const userTikTok = localStorage.getItem('texyiu_tiktok_user_confirmado') || '';
-    if (userTikTok) {
-      setStartupCheck('startup-tiktok', 'success', 'Listo');
-      const nickEl = document.getElementById('startup-nickname');
-      const userEl = document.getElementById('startup-username');
-      const profStatus = document.getElementById('startup-profile-status');
-      if (nickEl) nickEl.textContent = userTikTok;
-      if (userEl) userEl.textContent = '@' + userTikTok;
-      if (profStatus) profStatus.textContent = 'Verificado';
+  try {
+    const clientAuth = window.supabaseAuth;
+    const { data } = await clientAuth.auth.getSession();
+    if (data?.session) {
+      setStartupCheck('startup-google', 'success', 'Conectado');
     } else {
-      setStartupCheck('startup-tiktok', 'error', 'Sin perfil');
+      setStartupCheck('startup-google', 'error', 'Sin sesión');
+      await esperar(800);
+      window.location.href = 'login.html';
+      return;
     }
-    setStartupProgress(60, 'Perfil cargado...');
-    await esperar(400);
-
-    setStartupCheck('startup-server', 'loading', 'Comprobando...');
-    await esperar(600);
-    try {
-      await fetch(SERVER_URL + '/api/verificar-perfil?username=' + (userTikTok || 'marunity'), { cache: 'no-store' });
-      setStartupCheck('startup-server', 'success', 'En línea');
-    } catch(e) {
-      setStartupCheck('startup-server', 'success', 'En línea');
-    }
-    setStartupProgress(85, 'Casi listo...');
-    await esperar(400);
-
-    setStartupCheck('startup-comments', 'loading', 'Recuperando...');
-    await esperar(500);
-    setStartupCheck('startup-comments', 'success', 'Listo');
-    setStartupProgress(100, 'Todo listo');
-
-    if (startupTitle) startupTitle.textContent = 'Todo listo';
-    if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
-
-    await esperar(600);
-    startupEl.style.transition = 'opacity 0.4s ease';
-    startupEl.style.opacity = '0';
-
-    setTimeout(() => {
-      startupEl.style.display = 'none';
-      if (!cuentaTikTokConfirmada()) {
-        mostrarOnboarding();
-      }
-    }, 400);
+  } catch(e) {
+    setStartupCheck('startup-google', 'error', 'Error');
   }
+  setStartupProgress(30, 'Cuenta verificada...');
+  await esperar(400);
 
-  runStartup();
+  // 2. TIKTOK
+  setStartupCheck('startup-tiktok', 'loading', 'Recuperando...');
+  await esperar(600);
+  const userTikTok = localStorage.getItem('texyiu_tiktok_user_confirmado') || '';
+  if (userTikTok) {
+    setStartupCheck('startup-tiktok', 'success', 'Listo');
+    const nickEl = document.getElementById('startup-nickname');
+    const userEl = document.getElementById('startup-username');
+    const profStatus = document.getElementById('startup-profile-status');
+    if (nickEl) nickEl.textContent = userTikTok;
+    if (userEl) userEl.textContent = '@' + userTikTok;
+    if (profStatus) profStatus.textContent = 'Verificado';
+  } else {
+    setStartupCheck('startup-tiktok', 'error', 'Sin perfil');
+  }
+  setStartupProgress(60, 'Perfil cargado...');
+  await esperar(400);
+
+  // 3. SERVIDOR
+  setStartupCheck('startup-server', 'loading', 'Comprobando...');
+  await esperar(600);
+  try {
+    await fetch(SERVER_URL + '/api/verificar-perfil?username=' + (userTikTok || 'marunity'), { cache: 'no-store' });
+    setStartupCheck('startup-server', 'success', 'En línea');
+  } catch(e) {
+    setStartupCheck('startup-server', 'success', 'En línea');
+  }
+  setStartupProgress(85, 'Casi listo...');
+  await esperar(400);
+
+  // 4. COMENTARIOS
+  setStartupCheck('startup-comments', 'loading', 'Recuperando...');
+  await esperar(500);
+  setStartupCheck('startup-comments', 'success', 'Listo');
+  setStartupProgress(100, 'Todo listo');
+
+  if (startupTitle) startupTitle.textContent = 'Todo listo';
+  if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
+
+  // Transición automática al finalizar
+  await esperar(600);
+  startupEl.style.transition = 'opacity 0.4s ease';
+  startupEl.style.opacity = '0';
+
+  setTimeout(() => {
+    startupEl.style.display = 'none';
+    if (!cuentaTikTokConfirmada()) {
+      mostrarOnboarding();
+    }
+  }, 400);
+}
+
+// Ejecutar al cargar
+runStartup();
+
 });
