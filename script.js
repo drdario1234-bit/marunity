@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Likes Fixed - High Quality Native TTS)');
+  console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Likes Fixed)');
 
   const SERVER_URL = 'https://bot-tiktok-tslw.onrender.com';
   let socket = null;
@@ -8,10 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let ttsQueue = []; let isSpeaking = false;
   let elevenLabsQueue = []; let isPlayingElevenLabs = false; let currentElevenLabsAudio = null;
   let sonidoEpicoQueue = []; let isPlayingEpico = false;
-
-  // VOCES NATIVAS DEL NAVEGADOR
-  let vocesDisponibles = [];
-  let vozSeleccionadaObj = null;
 
   const sidebar = document.getElementById('sidebar');
   const sidebarFondo = document.getElementById('sidebar-fondo');
@@ -34,10 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const labelVol = document.getElementById('label-volumen');
 
   function getVolumenReal() {
-    const v = parseFloat(inputVol?.value);
-    if (isNaN(v)) return 1;
-    return Math.min(1, Math.max(0, v));
-  }
+  const v = parseFloat(inputVol?.value);
+  if (isNaN(v)) return 1;
+  return Math.min(1, Math.max(0, v));
+}
   const inputBloq = document.getElementById('palabras-bloqueadas');
   const inputVoz = document.getElementById('select-voz');
   const inputMotorVoz = document.getElementById('select-motor-voz');
@@ -66,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const perfilLiveCountComentarios = document.getElementById('perfil-live-count-comentarios');
   const perfilLiveCountLikes = document.getElementById('perfil-live-count-likes');
   const statLikesHoy = document.getElementById('stat-likes-hoy');
+  const perfilLiveCountRegalo = document.getElementById('perfil-live-count-regalo'); // Selector agregado para regalos
 
   const btnAgregarBloqueada = document.getElementById('btn-agregar-bloqueada');
   const btnVerBloqueadas = document.getElementById('btn-ver-bloqueadas');
@@ -82,32 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let totalLikesAcumulados = 0;
   let likesHoyAcumulados = 0;
+  let totalRegalosAcumulados = 0; // Variable para acumular regalos
   let renderTimerInterval = null;
-
-  // =========================================================================
-  // CARGA DE VOCES NATIVAS DE ALTA CALIDAD (GOOGLE NEURAL / NATURAL EN ESPAÑOL)
-  // =========================================================================
-  function cargarVocesNativas() {
-    if (!('speechSynthesis' in window)) return;
-    vocesDisponibles = window.speechSynthesis.getVoices();
-    if (!vocesDisponibles || vocesDisponibles.length === 0) return;
-
-    // Buscar una voz de alta calidad (Google, Neural o Natural) en español
-    const vozGoogleEs = vocesDisponibles.find(v => v.lang.toLowerCase().startsWith('es') && (v.name.includes('Google') || v.name.includes('Neural') || v.name.includes('Natural') || v.name.includes('espacio')))
-                      || vocesDisponibles.find(v => v.lang.toLowerCase().includes('es-419') || v.lang.toLowerCase().includes('es-us') || v.lang.toLowerCase().includes('es-mx') || v.lang.toLowerCase().includes('es-ar') || v.lang.toLowerCase().includes('es-es'))
-                      || vocesDisponibles.find(v => v.lang.toLowerCase().startsWith('es'))
-                      || vocesDisponibles[0];
-
-    if (vozGoogleEs) {
-      vozSeleccionadaObj = vozGoogleEs;
-      console.log('Voz nativa seleccionada:', vozGoogleEs.name, `(${vozGoogleEs.lang})`);
-    }
-  }
-
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.onvoiceschanged = cargarVocesNativas;
-    cargarVocesNativas();
-  }
 
   function verificarBloqueo30Dias() {
     const fechaBloqueo = localStorage.getItem('texyiu_bloqueo_hasta');
@@ -193,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function mostrarOnboarding(){ if(!onboardingScreen) return; onboardingScreen.classList.remove('hidden'); document.body.style.overflow='hidden'; setTimeout(()=>{ inputOnboarding?.focus(); },100); }
   function ocultarOnboarding(){ if(!onboardingScreen) return; onboardingScreen.classList.add('hidden'); document.body.style.overflow=''; }
   function cuentaTikTokConfirmada(){ const usuario=localStorage.getItem('texyiu_tiktok_user_confirmado')||localStorage.getItem('tiktok_user_confirmado'); return !!usuario; }
+
 if(cuentaTikTokConfirmada()){
   const uGuardado = localStorage.getItem('texyiu_tiktok_user_confirmado')||'';
   if(inputUser) inputUser.value = uGuardado;
@@ -340,9 +314,6 @@ if(cuentaTikTokConfirmada()){
     if (perfilLiveUsername && datos.username) { perfilLiveUsername.textContent = '@' + normalizarUsuarioTikTok(datos.username); }
   }
 
-  // =========================================================================
-  // CONEXIÓN AL LIVE (INCLUYE TOKEN DE SUPABASE PARA AUTENTICACIÓN)
-  // =========================================================================
   async function conectarTikTok(usuario, vieneDeConfirmacion=false){
     usuario=normalizarUsuarioTikTok(usuario);
     if(!usuario) throw new Error('Usuario TikTok inválido.');
@@ -358,11 +329,12 @@ if(cuentaTikTokConfirmada()){
         throw new Error(`Bloqueado ${dias} días`);
       }
     }
-    listaMensajes=[]; totalLikesAcumulados=0; likesHoyAcumulados=0;
+    listaMensajes=[]; totalLikesAcumulados=0; likesHoyAcumulados=0; totalRegalosAcumulados=0;
     actualizarBandejaComentarios();
     if(perfilLiveCountLikes) perfilLiveCountLikes.textContent = '0';
     if(statLikesHoy) statLikesHoy.textContent = '0';
     if(perfilLiveCountComentarios) perfilLiveCountComentarios.textContent = '0';
+    if(perfilLiveCountRegalo) perfilLiveCountRegalo.textContent = '0'; // Reiniciar contador de regalos en interfaz
     if(btnConectar){ btnConectar.disabled=true; btnConectar.textContent='Conectando...'; }
     iniciarContadorRender(estadoConexion, `Iniciando conexión con @${usuario}`);
     setLiveBadge(false,'Conectando...');
@@ -406,10 +378,10 @@ if(cuentaTikTokConfirmada()){
       if(inputOnboarding) inputOnboarding.value=usuario;
       if(perfilPendiente) { actualizarPerfilLiveConectado(perfilPendiente); } else { actualizarPerfilLiveConectado({ username: usuario, nickname: usuario, profilePicture: 'logo.png' }); }
       if(btnConectar){ btnConectar.textContent=`Conectado @${usuario}`; btnConectar.style.background='#22c55e'; btnConectar.disabled=false; }
-      toast(`Conectado a @${usuario}`,false);
+      toast(`Conectado @${usuario}`,false);
       setLiveBadge(true,`Conectado @${usuario}`);
 
-      reproducirVoz(`Conectado correctamente. Estás usando la voz nativa del navegador, Esperando comentarios.`);
+      reproducirVoz(`Conectado correctamente. Estás usando la voz nativa del navegador, esperando comentarios.`);
       
       conectarWebSockets(usuario);
       if(vieneDeConfirmacion){ cerrarModalPerfil(); ocultarOnboarding(); }
@@ -432,35 +404,29 @@ if(cuentaTikTokConfirmada()){
   }
 
 (async function continuarDespuesDeGoogle(){
-
   const usuarioPendiente = sessionStorage.getItem('marunity_tiktok_pendiente');
-
   if (!usuarioPendiente) return;
 
   try {
     const clientAuth = window.supabaseAuth;
-
     if (!clientAuth) {
       throw new Error('No se pudo inicializar la autenticación.');
     }
 
     const { data: { session } } = await clientAuth.auth.getSession();
-
     if (!session) {
       window.location.href = 'login.html';
       return;
     }
 
     await conectarTikTok(usuarioPendiente, true);
-
     sessionStorage.removeItem('marunity_tiktok_pendiente');
-
   } catch (error) {
     console.error('Error al continuar después de Google:', error);
     toast(error?.message || 'No se pudo continuar la conexión.', true);
   }
-
 })();
+
   if(btnConectar) btnConectar.addEventListener('click',()=>{ iniciarVerificacionTikTok(inputUser?.value||'','panel'); });
 
   const voiceCards = document.querySelectorAll('.voice-card:not(.locked)');
@@ -682,7 +648,6 @@ if(cuentaTikTokConfirmada()){
     isSpeaking=false;
   }
 
-  // REPRODUCCIÓN DE VOZ CON GOOGLE TTS (URL O SPEECH SYNTHESIS NATIVO DE ALTA CALIDAD)
   function reproducirVoz(texto, audioUrl=null){
     if(switchVoz&&!switchVoz.checked){ detenerTodaVoz(); return; }
     if(switchOverlay&&!switchOverlay.checked){ detenerTodaVoz(); return; }
@@ -732,25 +697,18 @@ if(cuentaTikTokConfirmada()){
     const texto=ttsQueue.shift();
     try{
       const utter=new SpeechSynthesisUtterance(texto);
-      utter.rate=parseFloat(inputVel?.value)||1.05;
+      utter.rate=parseFloat(inputVel?.value)||1;
       utter.volume=getVolumenReal();
       utter.pitch=parseFloat(inputTono?.value)||1;
-      
-      // Asignar voz nativa seleccionada (priorizando Google / Neural en español)
-      if (!vozSeleccionadaObj) cargarVocesNativas();
-      if (vozSeleccionadaObj) {
-        utter.voice = vozSeleccionadaObj;
-      } else {
-        const voces = speechSynthesis.getVoices();
-        const vozEs = voces.find(v=>v.lang.toLowerCase().includes('es-419')||v.lang.toLowerCase().includes('es-mx')||v.lang.toLowerCase().includes('es-us'))||voces.find(v=>v.lang.toLowerCase().includes('es'))||voces[0];
-        if(vozEs) utter.voice=vozEs;
-      }
-
-      utter.onend=()=>{ isSpeaking=false; setTimeout(procesarColaNativa,80); };
-      utter.onerror=()=>{ isSpeaking=false; setTimeout(procesarColaNativa,150); };
+      const voces=speechSynthesis.getVoices();
+      const vozEs=voces.find(v=>v.lang.toLowerCase().includes('es-419')||v.lang.toLowerCase().includes('es-mx')||v.lang.toLowerCase().includes('es-us'))||voces.find(v=>v.lang.toLowerCase().includes('es'))||voces[0];
+      if(vozEs) utter.voice=vozEs;
+      utter.onend=()=>{ isSpeaking=false; setTimeout(procesarColaNativa,100); };
+      utter.onerror=()=>{ isSpeaking=false; setTimeout(procesarColaNativa,200); };
       speechSynthesis.speak(utter);
     } catch(e){ isSpeaking=false; }
   }
+  if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged=()=>{ speechSynthesis.getVoices(); }; }
 
   const vistosReciente=new Map();
   function esDuplicadoCliente(usuario,mensaje){ const key=`${usuario}-${mensaje}`; const ahora=Date.now(); if(vistosReciente.has(key)&&ahora-vistosReciente.get(key)<4000) return true; vistosReciente.set(key,ahora); return false; }
@@ -763,24 +721,29 @@ if(cuentaTikTokConfirmada()){
     if (statLikesHoy) { statLikesHoy.textContent = likesHoyAcumulados; }
   }
 
-  // =========================================================================
-  // CONEXIÓN WEBSOCKETS (ENVÍA TOKEN DE SUPABASE AL SERVIDOR)
-  // =========================================================================
+  // Función para incrementar y actualizar el contador de regalos en la interfaz
+  function incrementarRegalos(cantidad) {
+    const qty = parseInt(cantidad) || 1;
+    totalRegalosAcumulados += qty;
+    if (perfilLiveCountRegalo) {
+      perfilLiveCountRegalo.textContent = totalRegalosAcumulados;
+    }
+  }
+
   async function conectarWebSockets(streamer){
     if(socket){ socket.disconnect(); socket=null; }
 
-      const clientAuth = window.supabaseAuth;
+    const clientAuth = window.supabaseAuth;
+    if (!clientAuth) {
+      throw new Error('No se pudo inicializar la autenticación de Google.');
+    }
 
-      if (!clientAuth) {
-        throw new Error('No se pudo inicializar la autenticación de Google.');
-      }
+    const sessionRes = await clientAuth.auth.getSession();
+    const token = sessionRes?.data?.session?.access_token || '';
 
-      const sessionRes = await clientAuth.auth.getSession();
-      const token = sessionRes?.data?.session?.access_token || '';
-
-      if (!token) {
-        throw new Error('Tenés que iniciar sesión con Google para conectar TikTok.');
-      }
+    if (!token) {
+      throw new Error('Tenés que iniciar sesión con Google para conectar TikTok.');
+    }
 
     socket=io(SERVER_URL,{
       auth: { token: token },
@@ -800,19 +763,23 @@ if(cuentaTikTokConfirmada()){
     socket.on('tts-limit-reached',(data)=>{ console.warn(data.mensaje); toast(data.mensaje,true); });
     socket.on('new-chat',(data)=>{
       if(esDuplicadoCliente(data.usuario,data.mensaje)) return;
-      listaMensajes.push(data); if(listaMensajes.length>1000) listaMensajes.shift();
-      actualizarBandejaComentarios();
       reproducirVoz(data.textoVoz||data.mensaje, data.audioUrl);
       sonarComentario();
     });
     socket.on('new-gift',(data)=>{
       const diamantes=data.diamondCount||data.diamonds||data.value||1;
+      incrementarRegalos(1); // Suma 1 al contador visual de regalos cada vez que llega uno
       onGift(diamantes);
       if(data.textoVoz||data.mensaje) reproducirVoz(data.textoVoz||data.mensaje, data.audioUrl);
       listaMensajes.push({usuario:data.usuario||'Regalo',mensaje:data.mensaje});
+      if(listaMensajes.length>5000) listaMensajes.shift(); // Límite subido a 5000
       actualizarBandejaComentarios();
     });
-    socket.on('gift',(data)=>{ onGift(data.diamondCount||data.diamonds||data.value||1); });
+    socket.on('gift',(data)=>{ 
+      const diamantes = data.diamondCount || data.diamonds || data.value || 1;
+      incrementarRegalos(1);
+      onGift(diamantes); 
+    });
     socket.on('new-like',(data)=>{ const count = data?.likeCount || data?.count || data?.totalLikeCount || data?.diamondCount || 1; incrementarLikes(count); });
     socket.on('like',(data)=>{ const count = data?.likeCount || data?.count || data?.totalLikeCount || data?.diamondCount || 1; incrementarLikes(count); });
     socket.on('new-follow',(data)=>{ if(data.textoVoz) reproducirVoz(data.textoVoz, data.audioUrl); });
@@ -837,8 +804,8 @@ if(cuentaTikTokConfirmada()){
     if(footerCount) footerCount.innerText=total;
     if(perfilLiveCountComentarios) perfilLiveCountComentarios.innerText = total;
     if(!contenedorBox) return;
-    if(total===0){ contenedorBox.innerHTML=`<p style="color:#6b7280;text-align:center;font-size:14px;padding:20px;">Esperando comentarios del LIVE...</p>`; return; }
-    contenedorBox.innerHTML=listaMensajes.slice(-100).reverse().map(msg=>`<div style="background:#15151f;padding:10px;border-radius:8px;border:1px solid #2a2a40;color:#fff;font-size:13px;display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><b style="color:#ff7a7a;white-space:nowrap;">${escapeHtml(msg.usuario)}:</b><span style="word-break:break-word;">${escapeHtml(msg.mensaje)}</span></div>`).join('');
+    if(total===0){ contenedorBox.innerHTML=`<p style="color:#6b7280;text-align:center;font-size:14px;padding:20px;">Esperando regalos del LIVE...</p>`; return; }
+    contenedorBox.innerHTML=listaMensajes.slice(-5000).reverse().map(msg=>`<div style="background:#15151f;padding:10px;border-radius:8px;border:1px solid #2a2a40;color:#fff;font-size:13px;display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><b style="color:#ff7a7a;white-space:nowrap;">${escapeHtml(msg.usuario)}:</b><span style="word-break:break-word;">${escapeHtml(msg.mensaje)}</span></div>`).join('');
   }
 
   function cargarPremium(){
@@ -874,7 +841,6 @@ if(cuentaTikTokConfirmada()){
     });
   }
 
-// ===== STARTUP - MARUNITY =====
 const startupEl = document.getElementById('marunity-startup');
 const startupBar = document.getElementById('startup-progress-bar');
 const startupText = document.getElementById('startup-progress-text');
@@ -904,7 +870,6 @@ async function runStartup() {
 
   setStartupProgress(5, 'Verificando servicios...');
 
-  // 1. GOOGLE
   setStartupCheck('startup-google', 'loading', 'Verificando...');
   await esperar(600);
 
@@ -925,7 +890,6 @@ async function runStartup() {
   setStartupProgress(30, 'Cuenta verificada...');
   await esperar(400);
 
-  // 2. TIKTOK
   setStartupCheck('startup-tiktok', 'loading', 'Recuperando...');
   await esperar(600);
   const userTikTok = localStorage.getItem('texyiu_tiktok_user_confirmado') || '';
@@ -943,7 +907,6 @@ async function runStartup() {
   setStartupProgress(60, 'Perfil cargado...');
   await esperar(400);
 
-  // 3. SERVIDOR
   setStartupCheck('startup-server', 'loading', 'Comprobando...');
   await esperar(600);
   try {
@@ -955,7 +918,6 @@ async function runStartup() {
   setStartupProgress(85, 'Casi listo...');
   await esperar(400);
 
-  // 4. COMENTARIOS
   setStartupCheck('startup-comments', 'loading', 'Recuperando...');
   await esperar(500);
   setStartupCheck('startup-comments', 'success', 'Listo');
@@ -964,7 +926,6 @@ async function runStartup() {
   if (startupTitle) startupTitle.textContent = 'Todo listo';
   if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
 
-  // Transición automática al finalizar
   await esperar(600);
   startupEl.style.transition = 'opacity 0.4s ease';
   startupEl.style.opacity = '0';
@@ -977,7 +938,6 @@ async function runStartup() {
   }, 400);
 }
 
-// Ejecutar al cargar
 runStartup();
 
 });
