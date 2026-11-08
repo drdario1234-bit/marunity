@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Comments Fixed)');
+  console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Clean Session Secured)');
 
   const SERVER_URL = 'https://bot-tiktok-tslw.onrender.com';
   let socket = null;
@@ -82,6 +82,22 @@ document.addEventListener('DOMContentLoaded', () => {
   let likesHoyAcumulados = 0;
   let totalRegalosAcumulados = 0;
   let renderTimerInterval = null;
+
+  // 🧹 FUNCIÓN GLOBAL DE LIMPIEZA DE SESIÓN PROFUNDA
+  window.cerrarSesionCompleta = async function() {
+    try {
+      const clientAuth = window.supabaseAuth;
+      if (clientAuth) {
+        await clientAuth.auth.signOut();
+      }
+    } catch (e) {
+      console.warn("Error durante signOut:", e);
+    } finally {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+    }
+  };
 
   function verificarBloqueo30Dias() {
     const fechaBloqueo = localStorage.getItem('texyiu_bloqueo_hasta');
@@ -252,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if(btnVolverTikTok) btnVolverTikTok.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
   if(modalTikTokBackdrop) modalTikTokBackdrop.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
 
-    if (btnConfirmarTikTok) {
+  if (btnConfirmarTikTok) {
     btnConfirmarTikTok.addEventListener('click', async () => {
       if (conexionEnCurso || !perfilPendiente) return;
 
@@ -290,12 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const token = session.access_token;
 
-        // 🛡️ GUARDAR EL VÍNCULO EN LA BASE DE DATOS DE SUPABASE (CON TIMEOUT DE SEGURIDAD 8s)
+        // 🛡️ GUARDAR EL VÍNCULO EN LA BASE DE DATOS DE SUPABASE (CON EXPOSICIÓN DE ERROR EXACTO)
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-          await fetch(`${SERVER_URL}/api/guardar-vinculo`, {
+          const respuesta = await fetch(`${SERVER_URL}/api/guardar-vinculo`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -309,32 +325,31 @@ document.addEventListener('DOMContentLoaded', () => {
             signal: controller.signal
           });
           clearTimeout(timeoutId);
+
+          let resJson;
+          try { resJson = await respuesta.json(); } catch(e) { resJson = {}; }
+
+          if (!respuesta.ok) {
+            throw new Error(resJson.error || `Error del servidor (${respuesta.status})`);
+          }
         } catch (err) {
-          console.warn("Aviso: El guardado en la base tardó pero continuamos:", err);
+          console.warn("Aviso en guardar-vinculo:", err);
+          if (err.message && !err.name.includes('AbortError')) {
+            throw err;
+          }
         }
 
-        // 🚀 LIMPIEZA VISUAL CRUCIAL: Cerramos el modal y restauramos el scroll antes de conectar
         cerrarModalPerfil();
         ocultarOnboarding();
 
-        // Conectamos los WebSockets del LIVE
         await conectarTikTok(usuario, true);
         sessionStorage.removeItem('marunity_tiktok_pendiente');
 
       } catch (error) {
         console.error('Error al confirmar TikTok:', error);
-        
-        // PLAN DE EMERGENCIA: Forzamos la salida del modal para que no te deje atrapado
-        cerrarModalPerfil();
-        ocultarOnboarding();
-
-        try {
-          await conectarTikTok(usuario, true);
-        } catch (e2) {
-          mostrarErrorConfirmacion(error?.message || 'No se pudo continuar.');
-          btnConfirmarTikTok.disabled = false;
-          btnConfirmarTikTok.textContent = 'Confirmar';
-        }
+        mostrarErrorConfirmacion(error?.message || 'No se pudo continuar.');
+        btnConfirmarTikTok.disabled = false;
+        btnConfirmarTikTok.textContent = 'Confirmar';
       } finally {
         conexionEnCurso = false;
         btnConfirmarTikTok.disabled = false;
@@ -913,6 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Promise(res => setTimeout(res, ms));
   }
 
+  // 🚀 INICIALIZACIÓN BLINDADA: VALIDACIÓN DE TOKEN HUÉRFANO
   async function runStartup() {
     if (!startupEl) return;
 
@@ -939,13 +955,13 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         setStartupCheck('startup-google', 'error', 'Sin sesión');
         await esperar(800);
-        window.location.href = 'login.html';
+        await window.cerrarSesionCompleta();
         return;
       }
     } catch(e) {
       setStartupCheck('startup-google', 'error', 'Error de red');
       await esperar(800);
-      window.location.href = 'login.html';
+      await window.cerrarSesionCompleta();
       return;
     }
 
@@ -962,8 +978,18 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      
       const resultado = await resp.json();
-      if (resultado.success && resultado.vinculado && resultado.profile) {
+
+      // 🛑 SI EL SERVIDOR RECHAZA EL TOKEN O EL EMAIL YA NO EXISTE EN LA BASE
+      if (!resp.ok || !resultado.success) {
+        setStartupCheck('startup-tiktok', 'error', 'Sesión revocada');
+        await esperar(800);
+        await window.cerrarSesionCompleta();
+        return;
+      }
+
+      if (resultado.vinculado && resultado.profile) {
         perfilVinculado = resultado.profile;
         setStartupCheck('startup-tiktok', 'success', 'Encontrado');
       } else {
@@ -999,8 +1025,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       startupEl.style.display = 'none';
 
-      // 🛡️ AQUÍ ESTÁ LA MAGIA: Si la base de datos devolvió un perfil vinculado,
-      // te mostramos el modal para que des tu OK manual con el dedo. Si no, abrimos onboarding.
       if (perfilVinculado) {
         mostrarModalPerfil(perfilVinculado);
       } else {
