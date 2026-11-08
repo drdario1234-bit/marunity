@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if(btnVolverTikTok) btnVolverTikTok.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
   if(modalTikTokBackdrop) modalTikTokBackdrop.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
 
-  if (btnConfirmarTikTok) {
+    if (btnConfirmarTikTok) {
     btnConfirmarTikTok.addEventListener('click', async () => {
       if (conexionEnCurso || !perfilPendiente) return;
 
@@ -290,36 +290,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const token = session.access_token;
 
-        // 🛡️ GUARDAR EL VÍNCULO EN LA BASE DE DATOS DE SUPABASE
-        const respVinculo = await fetch(`${SERVER_URL}/api/guardar-vinculo`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            username: perfilPendiente.username,
-            nickname: perfilPendiente.nickname,
-            profilePicture: perfilPendiente.profilePicture
-          })
-        });
+        // 🛡️ GUARDAR EL VÍNCULO EN LA BASE DE DATOS DE SUPABASE (CON TIMEOUT DE SEGURIDAD 8s)
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-        const resJson = await respVinculo.json();
-        if (!respVinculo.ok || !resJson.success) {
-          throw new Error(resJson.error || 'No se pudo guardar el vínculo en la base.');
+          await fetch(`${SERVER_URL}/api/guardar-vinculo`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              username: perfilPendiente.username,
+              nickname: perfilPendiente.nickname,
+              profilePicture: perfilPendiente.profilePicture
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+        } catch (err) {
+          console.warn("Aviso: El guardado en la base tardó pero continuamos:", err);
         }
 
+        // 🚀 LIMPIEZA VISUAL CRUCIAL: Cerramos el modal y restauramos el scroll antes de conectar
+        cerrarModalPerfil();
+        ocultarOnboarding();
+
+        // Conectamos los WebSockets del LIVE
         await conectarTikTok(usuario, true);
         sessionStorage.removeItem('marunity_tiktok_pendiente');
 
       } catch (error) {
         console.error('Error al confirmar TikTok:', error);
-        mostrarErrorConfirmacion(error?.message || 'No se pudo continuar.');
+        
+        // PLAN DE EMERGENCIA: Forzamos la salida del modal para que no te deje atrapado
+        cerrarModalPerfil();
+        ocultarOnboarding();
 
-        btnConfirmarTikTok.disabled = false;
-        btnConfirmarTikTok.textContent = 'Confirmar';
+        try {
+          await conectarTikTok(usuario, true);
+        } catch (e2) {
+          mostrarErrorConfirmacion(error?.message || 'No se pudo continuar.');
+          btnConfirmarTikTok.disabled = false;
+          btnConfirmarTikTok.textContent = 'Confirmar';
+        }
       } finally {
         conexionEnCurso = false;
+        btnConfirmarTikTok.disabled = false;
+        btnConfirmarTikTok.textContent = 'Confirmar';
       }
     });
   }
