@@ -284,7 +284,7 @@
   <section class="panel hidden" id="panel-comentarios">
     <div class="card">
       <h2>Comentarios (<span id="comentarios-counter">0</span>)</h2>
-      <p class="muted small">Tiempo real · 1,000 max</p>
+      <p class="muted small">Tiempo real · 5,000 max</p>
       <div id="chat-container-box" class="chat-container"></div>
     </div>
   </section>
@@ -295,6 +295,22 @@
       <div><b style="font-size: 18px;">Ajustes de Configuración</b><p style="font-size: 13px; color: #94a3b8;">Personaliza el comportamiento general de MarUnity LIVE</p></div>
     </div>
     <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
+      
+      <!-- NUEVO SWITCH PARA PRIORIZAR SONIDO PRO EN REGALOS -->
+      <div class="config-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+        <h3 style="font-size: 15px; color: #a855f7; margin-bottom: 12px; text-transform: uppercase;">👑 AUDIO Y REGALOS PRO</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0;">
+          <div>
+            <span style="font-size: 14px; color: #fff; display: block; font-weight: 600;">Priorizar Sonidos Pro en Regalos</span>
+            <span style="font-size: 11px; color: #94a3b8;">Si está activo, el regalo reproduce el sonido épico y silencia el TTS.</span>
+          </div>
+          <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+            <input type="checkbox" id="switch-priorizar-pro" checked style="opacity: 0; width: 0; height: 0;">
+            <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2a2a40; transition: .4s; border-radius: 24px;"></span>
+          </label>
+        </div>
+      </div>
+
       <div class="config-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
         <h3 style="font-size: 15px; color: #a855f7; margin-bottom: 12px; text-transform: uppercase;">🔊 LECTURA Y TTS</h3>
         <div class="voice-section" style="margin-bottom: 15px;"><label>VELOCIDAD DE LA VOZ</label><div style="display: flex; align-items: center; gap: 12px;"><input type="range" id="range-velocidad-voz" min="0.5" max="2" step="0.1" value="1" style="flex: 1; accent-color: #a855f7;"><span id="label-velocidad" style="color: #a855f7;">1.0x</span></div></div>
@@ -313,6 +329,7 @@
       <div class="config-actions"><button class="btn-save" id="btn-guardar-config" type="button">Guardar ajustes</button><button class="btn-reset" id="btn-reset-config" type="button">Restablecer</button></div>
     </div>
   </section>
+
 
   <section class="panel hidden" id="panel-sonidos" style="padding:0; background:transparent; border:0;">
     <iframe src="sonidos.html" id="iframe-sonidos" style="width:100%; height:85vh; border:0; border-radius:16px; background:#0F0F13;"></iframe>
