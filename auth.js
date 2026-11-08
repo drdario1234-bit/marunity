@@ -1,7 +1,7 @@
 // auth.js - MarUnity - Maneja la sesión de verdad
 
 const SUPABASE_URL = 'https://kaqytprpjqpptrjeerrt.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_JwTyhcOihTtDmL6VtuK2SQ_b_WHriql';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcXl0cHJwanFwcHRyamVlcnJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzg2MDgsImV4cCI6MjA1NjgxNDYwOH0.rVpYn5B5Lq8uH3GjK2vY9w1x8F2sD4t6Z7x9c1v2b3M'; // Clave anon real de tu proyecto
 
 // Crear una única instancia de Supabase
 const supabaseAuth = window.supabase.createClient(
@@ -44,12 +44,12 @@ async function actualizarSesionUI() {
 
   if (session && session.user) {
     const emailReal = session.user.email || 'Usuario';
-    const emailOculto = ofuscarCorreo(emailReal); // 
+    const emailOculto = ofuscarCorreo(emailReal); // 👈 Acá se oculta el correo
     const nombre = emailReal.split('@')[0];
 
     if (nombreEl) nombreEl.textContent = nombre;
-    if (emailEl) emailEl.textContent = emailOculto;      
-    if (sesionEmailEl) sesionEmailEl.textContent = emailOculto;
+    if (emailEl) emailEl.textContent = emailOculto;       // Sidebar protegido con asteriscos
+    if (sesionEmailEl) sesionEmailEl.textContent = emailOculto; // Panel protegido
     if (dotEl) dotEl.classList.add('on');
     if (tituloEl) tituloEl.textContent = 'Ajuste de sesión';
     if (subtituloEl) subtituloEl.textContent = 'Sesión iniciada';
@@ -61,7 +61,6 @@ async function actualizarSesionUI() {
     if (sesionEmailEl) sesionEmailEl.textContent = 'No iniciaste sesión';
     if (dotEl) dotEl.classList.remove('on');
     if (tituloEl) tituloEl.textContent = 'Ajuste de sesión';
-    if (subtituloEl) sesionSubtitulo?.textContent = 'Gestioná tu cuenta'; // Por seguridad
     if (subtituloEl) subtituloEl.textContent = 'Gestioná tu cuenta';
     if (btnAccion) btnAccion.textContent = 'Ir a iniciar sesión';
   }
