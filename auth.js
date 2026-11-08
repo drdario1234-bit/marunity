@@ -1,9 +1,9 @@
 // auth.js - MarUnity - Maneja la sesión de verdad
 
 const SUPABASE_URL = 'https://kaqytprpjqpptrjeerrt.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcXl0cHJwanFwcHRyamVlcnJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyMzg2MDgsImV4cCI6MjA1NjgxNDYwOH0.rVpYn5B5Lq8uH3GjK2vY9w1x8F2sD4t6Z7x9c1v2b3M';
+const SUPABASE_ANON_KEY = 'sb_publishable_JwTyhcOihTtDmL6VtuK2SQ_b_WHriql';
 
-// Crear una única instancia de Supabase
+// Crear una única instancia de Supabase con detección automática de URL y sesión
 const supabaseAuth = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY,
@@ -11,7 +11,7 @@ const supabaseAuth = window.supabase.createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true // 👈 ESTA ES LA CLAVE: Detecta automáticamente el token cuando Google te devuelve a la web
+      detectSessionInUrl: true // 👈 IMPERATIVO: Atrapa el token al volver de Google
     }
   }
 );
@@ -19,7 +19,7 @@ const supabaseAuth = window.supabase.createClient(
 // Hacer accesible el cliente desde script.js
 window.supabaseAuth = supabaseAuth;
 
-// 🛡️ Función para ofuscar el correo electrónico con asteriscos
+// 🛡️ Función para ofuscar el correo electrónico con asteriscos (grabación profesional)
 function ofuscarCorreo(correo) {
   if (!correo || !correo.includes('@')) return correo;
   const partes = correo.split('@');
@@ -52,12 +52,12 @@ async function actualizarSesionUI() {
 
     if (session && session.user) {
       const emailReal = session.user.email || 'Usuario';
-      const emailOculto = ofuscarCorreo(emailReal);
+      const emailOculto = ofuscarCorreo(emailReal); // 👈 Protege tu correo en pantalla
       const nombre = emailReal.split('@')[0];
 
       if (nombreEl) nombreEl.textContent = nombre;
-      if (emailEl) emailEl.textContent = emailOculto;
-      if (sesionEmailEl) sesionEmailEl.textContent = emailOculto;
+      if (emailEl) emailEl.textContent = emailOculto;       
+      if (sesionEmailEl) sesionEmailEl.textContent = emailOculto; 
       if (dotEl) dotEl.classList.add('on');
       if (tituloEl) tituloEl.textContent = 'Ajuste de sesión';
       if (subtituloEl) subtituloEl.textContent = 'Sesión iniciada';
@@ -78,11 +78,10 @@ async function actualizarSesionUI() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Asegurarnos de procesar cualquier token que venga en la URL de Google OAuth
   try {
     await supabaseAuth.auth.getSession();
   } catch (e) {
-    console.error("Error procesando sesión inicial:", e);
+    console.error("Error en sesión inicial de auth.js:", e);
   }
 
   actualizarSesionUI();
@@ -110,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  supabaseAuth.auth.onAuthStateChange((event, session) => {
+  supabaseAuth.auth.onAuthStateChange(() => {
     actualizarSesionUI();
   });
 
