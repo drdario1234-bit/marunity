@@ -30,15 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const labelVol = document.getElementById('label-volumen');
 
   function getVolumenReal() {
-  const v = parseFloat(inputVol?.value);
-  if (isNaN(v)) return 1;
-  return Math.min(1, Math.max(0, v));
-}
+    const v = parseFloat(inputVol?.value);
+    if (isNaN(v)) return 1;
+    return Math.min(1, Math.max(0, v));
+  }
   const inputBloq = document.getElementById('palabras-bloqueadas');
   const inputVoz = document.getElementById('select-voz');
   const inputMotorVoz = document.getElementById('select-motor-voz');
   const switchVoz = document.getElementById('switch-voz');
   const switchOverlay = document.getElementById('switch-overlay');
+  const switchPriorizarPro = document.getElementById('switch-priorizar-pro'); // 👈 Switch de Audio y Regalos Pro
   const onboardingScreen = document.getElementById('onboarding-screen');
   const inputOnboarding = document.getElementById('input-tiktok-onboarding');
   const btnVerificarTikTok = document.getElementById('btn-verificar-tiktok');
@@ -167,10 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function ocultarOnboarding(){ if(!onboardingScreen) return; onboardingScreen.classList.add('hidden'); document.body.style.overflow=''; }
   function cuentaTikTokConfirmada(){ const usuario=localStorage.getItem('texyiu_tiktok_user_confirmado')||localStorage.getItem('tiktok_user_confirmado'); return !!usuario; }
 
-if(cuentaTikTokConfirmada()){
-  const uGuardado = localStorage.getItem('texyiu_tiktok_user_confirmado')||'';
-  if(inputUser) inputUser.value = uGuardado;
-}
+  if(cuentaTikTokConfirmada()){
+    const uGuardado = localStorage.getItem('texyiu_tiktok_user_confirmado')||'';
+    if(inputUser) inputUser.value = uGuardado;
+  }
 
   async function verificarPerfilTikTok(usuario){
     if (!navigator.onLine) {
@@ -257,56 +258,56 @@ if(cuentaTikTokConfirmada()){
   if(btnVolverTikTok) btnVolverTikTok.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
   if(modalTikTokBackdrop) modalTikTokBackdrop.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
 
- if (btnConfirmarTikTok) {
-  btnConfirmarTikTok.addEventListener('click', async () => {
-    if (conexionEnCurso || !perfilPendiente) return;
+  if (btnConfirmarTikTok) {
+    btnConfirmarTikTok.addEventListener('click', async () => {
+      if (conexionEnCurso || !perfilPendiente) return;
 
-    const usuario = normalizarUsuarioTikTok(perfilPendiente.username);
+      const usuario = normalizarUsuarioTikTok(perfilPendiente.username);
 
-    if (!usuario) {
-      mostrarErrorConfirmacion('No se pudo obtener el usuario.');
-      return;
-    }
-
-    conexionEnCurso = true;
-    btnConfirmarTikTok.disabled = true;
-    btnConfirmarTikTok.textContent = 'Comprobando sesión...';
-
-    try {
-      const clientAuth = window.supabaseAuth;
-
-      if (!clientAuth) {
-        throw new Error('No se pudo inicializar la autenticación.');
+      if (!usuario) {
+        mostrarErrorConfirmacion('No se pudo obtener el usuario.');
+        return;
       }
 
-      const sessionRes = await clientAuth.auth.getSession();
+      conexionEnCurso = true;
+      btnConfirmarTikTok.disabled = true;
+      btnConfirmarTikTok.textContent = 'Comprobando sesión...';
 
-      if (sessionRes.error) {
-        throw sessionRes.error;
+      try {
+        const clientAuth = window.supabaseAuth;
+
+        if (!clientAuth) {
+          throw new Error('No se pudo inicializar la autenticación.');
+        }
+
+        const sessionRes = await clientAuth.auth.getSession();
+
+        if (sessionRes.error) {
+          throw sessionRes.error;
+        }
+
+        const session = sessionRes?.data?.session;
+
+        if (session?.access_token) {
+          await conectarTikTok(usuario, true);
+          sessionStorage.removeItem('marunity_tiktok_pendiente');
+        } else {
+          sessionStorage.setItem('marunity_tiktok_pendiente', usuario);
+          btnConfirmarTikTok.textContent = 'Continuando con Google...';
+          window.location.href = 'login.html';
+        }
+
+      } catch (error) {
+        console.error('Error al confirmar TikTok:', error);
+        mostrarErrorConfirmacion(error?.message || 'No se pudo continuar.');
+
+        btnConfirmarTikTok.disabled = false;
+        btnConfirmarTikTok.textContent = 'Confirmar';
+      } finally {
+        conexionEnCurso = false;
       }
-
-      const session = sessionRes?.data?.session;
-
-      if (session?.access_token) {
-        await conectarTikTok(usuario, true);
-        sessionStorage.removeItem('marunity_tiktok_pendiente');
-      } else {
-        sessionStorage.setItem('marunity_tiktok_pendiente', usuario);
-        btnConfirmarTikTok.textContent = 'Continuando con Google...';
-        window.location.href = 'login.html';
-      }
-
-    } catch (error) {
-      console.error('Error al confirmar TikTok:', error);
-      mostrarErrorConfirmacion(error?.message || 'No se pudo continuar.');
-
-      btnConfirmarTikTok.disabled = false;
-      btnConfirmarTikTok.textContent = 'Confirmar';
-    } finally {
-      conexionEnCurso = false;
-    }
-  });
-}
+    });
+  }
 
   function actualizarPerfilLiveConectado(datos) {
     if (perfilLiveAvatar && datos.profilePicture) { perfilLiveAvatar.src = datos.profilePicture; perfilLiveAvatar.onerror = () => { perfilLiveAvatar.onerror = null; perfilLiveAvatar.src = 'logo.png'; }; }
@@ -403,29 +404,29 @@ if(cuentaTikTokConfirmada()){
     }
   }
 
-(async function continuarDespuesDeGoogle(){
-  const usuarioPendiente = sessionStorage.getItem('marunity_tiktok_pendiente');
-  if (!usuarioPendiente) return;
+  (async function continuarDespuesDeGoogle(){
+    const usuarioPendiente = sessionStorage.getItem('marunity_tiktok_pendiente');
+    if (!usuarioPendiente) return;
 
-  try {
-    const clientAuth = window.supabaseAuth;
-    if (!clientAuth) {
-      throw new Error('No se pudo inicializar la autenticación.');
+    try {
+      const clientAuth = window.supabaseAuth;
+      if (!clientAuth) {
+        throw new Error('No se pudo inicializar la autenticación.');
+      }
+
+      const { data: { session } } = await clientAuth.auth.getSession();
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      await conectarTikTok(usuarioPendiente, true);
+      sessionStorage.removeItem('marunity_tiktok_pendiente');
+    } catch (error) {
+      console.error('Error al continuar después de Google:', error);
+      toast(error?.message || 'No se pudo continuar la conexión.', true);
     }
-
-    const { data: { session } } = await clientAuth.auth.getSession();
-    if (!session) {
-      window.location.href = 'login.html';
-      return;
-    }
-
-    await conectarTikTok(usuarioPendiente, true);
-    sessionStorage.removeItem('marunity_tiktok_pendiente');
-  } catch (error) {
-    console.error('Error al continuar después de Google:', error);
-    toast(error?.message || 'No se pudo continuar la conexión.', true);
-  }
-})();
+  })();
 
   if(btnConectar) btnConectar.addEventListener('click',()=>{ iniciarVerificacionTikTok(inputUser?.value||'','panel'); });
 
@@ -508,6 +509,7 @@ if(cuentaTikTokConfirmada()){
       velocidad:inputVel?.value||'1', volumen:inputVol?.value||'1', tono:inputTono?.value||'1',
       voz:inputVoz?.value||'', motorVoz:inputMotorVoz?.value||'nativo',
       vozOn:switchVoz?.checked??true, overlayOn:switchOverlay?.checked??true,
+      priorizarPro: switchPriorizarPro?.checked ?? true, // 👈 Guarda el estado del switch Pro
       sonido_rosa:document.getElementById('sonido-rosa')?.checked??true,
       sonido_chicos:document.getElementById('sonido-chicos')?.checked??true,
       sonido_mano:document.getElementById('sonido-mano')?.checked??true,
@@ -537,6 +539,7 @@ if(cuentaTikTokConfirmada()){
     if(cfg.motorVoz&&inputMotorVoz) inputMotorVoz.value=cfg.motorVoz;
     if(cfg.vozOn!==undefined&&switchVoz) switchVoz.checked=cfg.vozOn;
     if(cfg.overlayOn!==undefined&&switchOverlay) switchOverlay.checked=cfg.overlayOn;
+    if(cfg.priorizarPro!==undefined&&switchPriorizarPro) switchPriorizarPro.checked=cfg.priorizarPro; // 👈 Carga el estado del switch Pro
     ['sonido-rosa','sonido-chicos','sonido-mano','sonido-pistola','sonido-galaxia','sonido-ballena','sonido-comentario'].forEach(id=>{
       const key=id.replace('sonido-','sonido_'); if(cfg[key]!==undefined){ const e=document.getElementById(id); if(e) e.checked=cfg[key]; }
     });
@@ -550,6 +553,7 @@ if(cuentaTikTokConfirmada()){
   if(inputMotorVoz) inputMotorVoz.addEventListener('change',()=>{ detenerTodaVoz(); guardarAuto(); });
   if(switchVoz) switchVoz.addEventListener('change',()=>{ const f=document.getElementById('footer-voz'); if(f) f.innerText=switchVoz.checked?'ON':'OFF'; if(!switchVoz.checked) detenerTodaVoz(); guardarAuto(); });
   if(switchOverlay) switchOverlay.addEventListener('change',()=>{ if(!switchOverlay.checked) detenerTodaVoz(); guardarAuto(); });
+  if(switchPriorizarPro) switchPriorizarPro.addEventListener('change', guardarAuto); // 👈 Escucha cambios en el switch Pro
   ['sonido-rosa','sonido-chicos','sonido-mano','sonido-pistola','sonido-galaxia','sonido-ballena','sonido-comentario'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change',guardarAuto); });
 
   function abrirSidebar(){ if(!sidebar||!sidebarFondo) return; sidebar.classList.remove('hidden'); sidebarFondo.classList.remove('hidden'); document.body.style.overflow='hidden'; }
@@ -806,7 +810,15 @@ if(cuentaTikTokConfirmada()){
       const diamantes=data.diamondCount||data.diamonds||data.value||1;
       incrementarRegalos(1);
       onGift(diamantes);
-      if(data.textoVoz||data.mensaje) reproducirVoz(data.textoVoz||data.mensaje, data.audioUrl);
+
+      // Valida si priorizar Pro en regalos está activo
+      const modoProActivo = switchPriorizarPro ? switchPriorizarPro.checked : true;
+      if (modoProActivo) {
+        console.log('Regalo recibido: Sonido Pro activado, TTS silenciado.');
+      } else {
+        if(data.textoVoz||data.mensaje) reproducirVoz(data.textoVoz||data.mensaje, data.audioUrl);
+      }
+
       listaMensajes.push({usuario:data.usuario||'Regalo',mensaje:data.mensaje});
       if(listaMensajes.length>5000) listaMensajes.shift();
       actualizarBandejaComentarios();
@@ -877,103 +889,103 @@ if(cuentaTikTokConfirmada()){
     });
   }
 
-const startupEl = document.getElementById('marunity-startup');
-const startupBar = document.getElementById('startup-progress-bar');
-const startupText = document.getElementById('startup-progress-text');
-const startupTitle = document.getElementById('startup-title');
-const startupDesc = document.getElementById('startup-description');
+  const startupEl = document.getElementById('marunity-startup');
+  const startupBar = document.getElementById('startup-progress-bar');
+  const startupText = document.getElementById('startup-progress-text');
+  const startupTitle = document.getElementById('startup-title');
+  const startupDesc = document.getElementById('startup-description');
 
-function setStartupCheck(id, estado, texto) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('loading', 'success', 'error');
-  if (estado) el.classList.add(estado);
-  const status = el.querySelector('.startup-status');
-  if (status) status.textContent = texto || estado;
-}
+  function setStartupCheck(id, estado, texto) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('loading', 'success', 'error');
+    if (estado) el.classList.add(estado);
+    const status = el.querySelector('.startup-status');
+    if (status) status.textContent = texto || estado;
+  }
 
-function setStartupProgress(pct, texto) {
-  if (startupBar) startupBar.style.width = pct + '%';
-  if (startupText) startupText.textContent = texto || '';
-}
+  function setStartupProgress(pct, texto) {
+    if (startupBar) startupBar.style.width = pct + '%';
+    if (startupText) startupText.textContent = texto || '';
+  }
 
-function esperar(ms) {
-  return new Promise(res => setTimeout(res, ms));
-}
+  function esperar(ms) {
+    return new Promise(res => setTimeout(res, ms));
+  }
 
-async function runStartup() {
-  if (!startupEl) return;
+  async function runStartup() {
+    if (!startupEl) return;
 
-  setStartupProgress(5, 'Verificando servicios...');
+    setStartupProgress(5, 'Verificando servicios...');
 
-  setStartupCheck('startup-google', 'loading', 'Verificando...');
-  await esperar(600);
+    setStartupCheck('startup-google', 'loading', 'Verificando...');
+    await esperar(600);
 
-  try {
-    const clientAuth = window.supabaseAuth;
-    const { data } = await clientAuth.auth.getSession();
-    if (data?.session) {
-      setStartupCheck('startup-google', 'success', 'Conectado');
+    try {
+      const clientAuth = window.supabaseAuth;
+      const { data } = await clientAuth.auth.getSession();
+      if (data?.session) {
+        setStartupCheck('startup-google', 'success', 'Conectado');
+      } else {
+        setStartupCheck('startup-google', 'error', 'Sin sesión');
+        await esperar(800);
+        window.location.href = 'login.html';
+        return;
+      }
+    } catch(e) {
+      setStartupCheck('startup-google', 'error', 'Error');
+    }
+    setStartupProgress(30, 'Cuenta verificada...');
+    await esperar(400);
+
+    setStartupCheck('startup-tiktok', 'loading', 'Recuperando...');
+    await esperar(600);
+    const userTikTok = localStorage.getItem('texyiu_tiktok_user_confirmado') || '';
+    if (userTikTok) {
+      setStartupCheck('startup-tiktok', 'success', 'Listo');
+      const nickEl = document.getElementById('startup-nickname');
+      const userEl = document.getElementById('startup-username');
+      const profStatus = document.getElementById('startup-profile-status');
+      if (nickEl) nickEl.textContent = userTikTok;
+      if (userEl) userEl.textContent = '@' + userTikTok;
+      if (profStatus) profStatus.textContent = 'Verificado';
     } else {
-      setStartupCheck('startup-google', 'error', 'Sin sesión');
-      await esperar(800);
-      window.location.href = 'login.html';
-      return;
+      setStartupCheck('startup-tiktok', 'error', 'Sin perfil');
     }
-  } catch(e) {
-    setStartupCheck('startup-google', 'error', 'Error');
-  }
-  setStartupProgress(30, 'Cuenta verificada...');
-  await esperar(400);
+    setStartupProgress(60, 'Perfil cargado...');
+    await esperar(400);
 
-  setStartupCheck('startup-tiktok', 'loading', 'Recuperando...');
-  await esperar(600);
-  const userTikTok = localStorage.getItem('texyiu_tiktok_user_confirmado') || '';
-  if (userTikTok) {
-    setStartupCheck('startup-tiktok', 'success', 'Listo');
-    const nickEl = document.getElementById('startup-nickname');
-    const userEl = document.getElementById('startup-username');
-    const profStatus = document.getElementById('startup-profile-status');
-    if (nickEl) nickEl.textContent = userTikTok;
-    if (userEl) userEl.textContent = '@' + userTikTok;
-    if (profStatus) profStatus.textContent = 'Verificado';
-  } else {
-    setStartupCheck('startup-tiktok', 'error', 'Sin perfil');
-  }
-  setStartupProgress(60, 'Perfil cargado...');
-  await esperar(400);
-
-  setStartupCheck('startup-server', 'loading', 'Comprobando...');
-  await esperar(600);
-  try {
-    await fetch(SERVER_URL + '/api/verificar-perfil?username=' + (userTikTok || 'marunity'), { cache: 'no-store' });
-    setStartupCheck('startup-server', 'success', 'En línea');
-  } catch(e) {
-    setStartupCheck('startup-server', 'success', 'En línea');
-  }
-  setStartupProgress(85, 'Casi listo...');
-  await esperar(400);
-
-  setStartupCheck('startup-comments', 'loading', 'Recuperando...');
-  await esperar(500);
-  setStartupCheck('startup-comments', 'success', 'Listo');
-  setStartupProgress(100, 'Todo listo');
-
-  if (startupTitle) startupTitle.textContent = 'Todo listo';
-  if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
-
-  await esperar(600);
-  startupEl.style.transition = 'opacity 0.4s ease';
-  startupEl.style.opacity = '0';
-
-  setTimeout(() => {
-    startupEl.style.display = 'none';
-    if (!cuentaTikTokConfirmada()) {
-      mostrarOnboarding();
+    setStartupCheck('startup-server', 'loading', 'Comprobando...');
+    await esperar(600);
+    try {
+      await fetch(SERVER_URL + '/api/verificar-perfil?username=' + (userTikTok || 'marunity'), { cache: 'no-store' });
+      setStartupCheck('startup-server', 'success', 'En línea');
+    } catch(e) {
+      setStartupCheck('startup-server', 'success', 'En línea');
     }
-  }, 400);
-}
+    setStartupProgress(85, 'Casi listo...');
+    await esperar(400);
 
-runStartup();
+    setStartupCheck('startup-comments', 'loading', 'Recuperando...');
+    await esperar(500);
+    setStartupCheck('startup-comments', 'success', 'Listo');
+    setStartupProgress(100, 'Todo listo');
+
+    if (startupTitle) startupTitle.textContent = 'Todo listo';
+    if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
+
+    await esperar(600);
+    startupEl.style.transition = 'opacity 0.4s ease';
+    startupEl.style.opacity = '0';
+
+    setTimeout(() => {
+      startupEl.style.display = 'none';
+      if (!cuentaTikTokConfirmada()) {
+        mostrarOnboarding();
+      }
+    }, 400);
+  }
+
+  runStartup();
 
 });
