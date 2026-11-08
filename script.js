@@ -403,31 +403,6 @@ document.addEventListener('DOMContentLoaded', () => {
       throw error;
     }
   }
-
-  (async function continuarDespuesDeGoogle(){
-    const usuarioPendiente = sessionStorage.getItem('marunity_tiktok_pendiente');
-    if (!usuarioPendiente) return;
-
-    try {
-      const clientAuth = window.supabaseAuth;
-      if (!clientAuth) {
-        throw new Error('No se pudo inicializar la autenticación.');
-      }
-
-      const { data: { session } } = await clientAuth.auth.getSession();
-      if (!session) {
-        window.location.href = 'login.html';
-        return;
-      }
-
-      await conectarTikTok(usuarioPendiente, true);
-      sessionStorage.removeItem('marunity_tiktok_pendiente');
-    } catch (error) {
-      console.error('Error al continuar después de Google:', error);
-      toast(error?.message || 'No se pudo continuar la conexión.', true);
-    }
-  })();
-
   if(btnConectar) btnConectar.addEventListener('click',()=>{ iniciarVerificacionTikTok(inputUser?.value||'','panel'); });
 
   const voiceCards = document.querySelectorAll('.voice-card:not(.locked)');
