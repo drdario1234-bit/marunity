@@ -1025,24 +1025,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (startupTitle) startupTitle.textContent = 'Todo listo';
     if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
 
-    await esperar(400);
+       await esperar(400);
     startupEl.style.transition = 'opacity 0.4s ease';
     startupEl.style.opacity = '0';
 
-    setTimeout(() => {
+    setTimeout(async () => {
       startupEl.style.display = 'none';
-      // Si no tiene usuario de tiktok confirmado, le abrimos el onboarding suavemente
       if (!cuentaTikTokConfirmada()) {
         mostrarOnboarding();
       } else {
-        // Si ya lo tiene, reconectamos automáticamente en segundo plano
         const u = localStorage.getItem('texyiu_tiktok_user_confirmado');
         if (u) {
+          try {
+            const datosPerfil = await verificarPerfilTikTok(u);
+            actualizarPerfilLiveConectado(datosPerfil);
+          } catch(e) {
+            console.warn("Usando datos locales de respaldo:", e);
+          }
           conectarTikTok(u, true).catch(() => {});
         }
       }
-    }, 400);
+    }, 600);
   }
   runStartup();
-
 });
