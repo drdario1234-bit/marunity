@@ -1,4 +1,3 @@
-
 // auth.js - MarUnity - Maneja la sesión de verdad
 
 const SUPABASE_URL = 'https://kaqytprpjqpptrjeerrt.supabase.co';
@@ -13,6 +12,25 @@ const supabaseAuth = window.supabase.createClient(
 // Hacer accesible el cliente desde script.js
 window.supabaseAuth = supabaseAuth;
 
+// 🛡️ Función para ofuscar el correo electrónico con asteriscos (grabación profesional)
+function ofuscarCorreo(correo) {
+  if (!correo || !correo.includes('@')) return correo;
+  const partes = correo.split('@');
+  const usuario = partes[0];
+  const dominio = partes[1];
+  
+  if (usuario.length <= 2) {
+    return usuario[0] + '***@' + dominio;
+  }
+  
+  const visibleInicio = usuario.substring(0, 1);
+  const visibleFin = usuario.substring(usuario.length - 1);
+  const asteriscos = '*'.repeat(Math.min(usuario.length - 2, 5));
+  
+  return `${visibleInicio}${asteriscos}${visibleFin}@${dominio}`;
+}
+window.ofuscarCorreo = ofuscarCorreo;
+
 async function actualizarSesionUI() {
   const nombreEl = document.getElementById('sidebar-user-name');
   const emailEl = document.getElementById('sidebar-user-email');
@@ -25,12 +43,13 @@ async function actualizarSesionUI() {
   const { data: { session } } = await supabaseAuth.auth.getSession();
 
   if (session && session.user) {
-    const email = session.user.email || 'Usuario';
-    const nombre = email.split('@')[0];
+    const emailReal = session.user.email || 'Usuario';
+    const emailOculto = ofuscarCorreo(emailReal); // 
+    const nombre = emailReal.split('@')[0];
 
     if (nombreEl) nombreEl.textContent = nombre;
-    if (emailEl) emailEl.textContent = email;
-    if (sesionEmailEl) sesionEmailEl.textContent = email;
+    if (emailEl) emailEl.textContent = emailOculto;      
+    if (sesionEmailEl) sesionEmailEl.textContent = emailOculto;
     if (dotEl) dotEl.classList.add('on');
     if (tituloEl) tituloEl.textContent = 'Ajuste de sesión';
     if (subtituloEl) subtituloEl.textContent = 'Sesión iniciada';
@@ -42,6 +61,7 @@ async function actualizarSesionUI() {
     if (sesionEmailEl) sesionEmailEl.textContent = 'No iniciaste sesión';
     if (dotEl) dotEl.classList.remove('on');
     if (tituloEl) tituloEl.textContent = 'Ajuste de sesión';
+    if (subtituloEl) sesionSubtitulo?.textContent = 'Gestioná tu cuenta'; // Por seguridad
     if (subtituloEl) subtituloEl.textContent = 'Gestioná tu cuenta';
     if (btnAccion) btnAccion.textContent = 'Ir a iniciar sesión';
   }
