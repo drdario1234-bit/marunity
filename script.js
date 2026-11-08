@@ -1,33 +1,3 @@
-// =========================================================================
-// 🛡️ ESCUDO ANTI-BUCLES: Limpieza automática de IndexedDB corrupto en Chrome
-// =========================================================================
-(function() {
-  const STORAGE_GUARD_KEY = 'marunity_storage_clean_v1';
-  if (!localStorage.getItem(STORAGE_GUARD_KEY)) {
-    try {
-      // Si el navegador tiene basura en el almacenamiento de Supabase que causa el loop:
-      console.warn("🧹 Limpiando almacenamiento persistente corrupto de Chrome...");
-      const tiktokUser = localStorage.getItem('texyiu_tiktok_user_confirmado');
-      
-      // Borramos únicamente las llaves de Supabase que Chrome suele corromper
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const key = localStorage.key(i);
-        if (key && (key.includes('supabase') || key.includes('sb-'))) {
-          localStorage.removeItem(key);
-        }
-      }
-      
-      if (tiktokUser) {
-        localStorage.setItem('texyiu_tiktok_user_confirmado', tiktokUser);
-      }
-      
-      localStorage.setItem(STORAGE_GUARD_KEY, 'true');
-    } catch (e) {
-      console.error("Error en la autopurga de almacenamiento:", e);
-    }
-  }
-})();
-
 document.addEventListener('DOMContentLoaded', () => {
   console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Comments Fixed)');
 
