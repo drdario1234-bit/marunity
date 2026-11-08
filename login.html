@@ -59,7 +59,15 @@ h1{font-size:32px;font-weight:800;letter-spacing:2px}
   const SUPABASE_URL = 'https://kaqytprpjqpptrjeerrt.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_JwTyhcOihTtDmL6VtuK2SQ_b_WHriql';
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // 🛡️ Agregamos la configuración de persistencia y detección de URL en el login
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  });
+
   const btnG = document.getElementById('btnG');
   const btnGText = document.getElementById('btnG-text');
   const errorEl = document.getElementById('login-error');
@@ -81,10 +89,14 @@ h1{font-size:32px;font-weight:800;letter-spacing:2px}
     btnG.disabled = true;
     btnGText.textContent = 'Conectando...';
     errorEl.textContent = '';
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/index.html' }
+      options: { 
+        redirectTo: 'https://marunity.vercel.app/index.html' 
+      }
     });
+
     if (error) {
       errorEl.textContent = 'Error: ' + error.message;
       btnG.disabled = false;
