@@ -77,40 +77,31 @@ async function actualizarSesionUI() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    await supabaseAuth.auth.getSession();
-  } catch (e) {
-    console.error("Error en sesión inicial de auth.js:", e);
-  }
+// ============================================================
+// EXPORTACIÓN DE FUNCIONES DE SESIÓN PARA USO GLOBAL
+// ============================================================
+window.actualizarSesionUI = actualizarSesionUI;
 
-  actualizarSesionUI();
-
-  const btnAccion = document.getElementById('btn-accion-sesion');
-
-  if (btnAccion) {
-    btnAccion.addEventListener('click', async () => {
+// Manejador del botón de acción en el sheet de sesión
+document.addEventListener('click', async (e) => {
+  if (e.target && e.target.id === 'btn-accion-sesion') {
+    try {
       const { data: { session } } = await supabaseAuth.auth.getSession();
-
       if (session) {
         await supabaseAuth.auth.signOut();
-        window.location.href = 'login.html';
-      } else {
-        window.location.href = 'login.html';
       }
-    });
-  }
-
-  const emailEl = document.getElementById('sidebar-user-email');
-
-  if (emailEl) {
-    emailEl.addEventListener('click', () => {
       window.location.href = 'login.html';
-    });
+    } catch (err) {
+      window.location.href = 'login.html';
+    }
   }
 
-  supabaseAuth.auth.onAuthStateChange(() => {
-    actualizarSesionUI();
-  });
+  if (e.target && e.target.id === 'sidebar-user-email') {
+    window.location.href = 'login.html';
+  }
+});
 
+// Escuchar cambios de sesión de forma global de manera limpia
+supabaseAuth.auth.onAuthStateChange(() => {
+  actualizarSesionUI();
 });
