@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Likes Fixed)');
+  console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Comments Fixed)');
 
   const SERVER_URL = 'https://bot-tiktok-tslw.onrender.com';
   let socket = null;
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputMotorVoz = document.getElementById('select-motor-voz');
   const switchVoz = document.getElementById('switch-voz');
   const switchOverlay = document.getElementById('switch-overlay');
-  const switchPriorizarPro = document.getElementById('switch-priorizar-pro'); // 👈 Switch de Audio y Regalos Pro
+  const switchPriorizarPro = document.getElementById('switch-priorizar-pro');
   const onboardingScreen = document.getElementById('onboarding-screen');
   const inputOnboarding = document.getElementById('input-tiktok-onboarding');
   const btnVerificarTikTok = document.getElementById('btn-verificar-tiktok');
@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
       velocidad:inputVel?.value||'1', volumen:inputVol?.value||'1', tono:inputTono?.value||'1',
       voz:inputVoz?.value||'', motorVoz:inputMotorVoz?.value||'nativo',
       vozOn:switchVoz?.checked??true, overlayOn:switchOverlay?.checked??true,
-      priorizarPro: switchPriorizarPro?.checked ?? true, // 👈 Guarda el estado del switch Pro
+      priorizarPro: switchPriorizarPro?.checked ?? true,
       sonido_rosa:document.getElementById('sonido-rosa')?.checked??true,
       sonido_chicos:document.getElementById('sonido-chicos')?.checked??true,
       sonido_mano:document.getElementById('sonido-mano')?.checked??true,
@@ -539,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(cfg.motorVoz&&inputMotorVoz) inputMotorVoz.value=cfg.motorVoz;
     if(cfg.vozOn!==undefined&&switchVoz) switchVoz.checked=cfg.vozOn;
     if(cfg.overlayOn!==undefined&&switchOverlay) switchOverlay.checked=cfg.overlayOn;
-    if(cfg.priorizarPro!==undefined&&switchPriorizarPro) switchPriorizarPro.checked=cfg.priorizarPro; // 👈 Carga el estado del switch Pro
+    if(cfg.priorizarPro!==undefined&&switchPriorizarPro) switchPriorizarPro.checked=cfg.priorizarPro;
     ['sonido-rosa','sonido-chicos','sonido-mano','sonido-pistola','sonido-galaxia','sonido-ballena','sonido-comentario'].forEach(id=>{
       const key=id.replace('sonido-','sonido_'); if(cfg[key]!==undefined){ const e=document.getElementById(id); if(e) e.checked=cfg[key]; }
     });
@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if(inputMotorVoz) inputMotorVoz.addEventListener('change',()=>{ detenerTodaVoz(); guardarAuto(); });
   if(switchVoz) switchVoz.addEventListener('change',()=>{ const f=document.getElementById('footer-voz'); if(f) f.innerText=switchVoz.checked?'ON':'OFF'; if(!switchVoz.checked) detenerTodaVoz(); guardarAuto(); });
   if(switchOverlay) switchOverlay.addEventListener('change',()=>{ if(!switchOverlay.checked) detenerTodaVoz(); guardarAuto(); });
-  if(switchPriorizarPro) switchPriorizarPro.addEventListener('change', guardarAuto); // 👈 Escucha cambios en el switch Pro
+  if(switchPriorizarPro) switchPriorizarPro.addEventListener('change', guardarAuto);
   ['sonido-rosa','sonido-chicos','sonido-mano','sonido-pistola','sonido-galaxia','sonido-ballena','sonido-comentario'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('change',guardarAuto); });
 
   function abrirSidebar(){ if(!sidebar||!sidebarFondo) return; sidebar.classList.remove('hidden'); sidebarFondo.classList.remove('hidden'); document.body.style.overflow='hidden'; }
@@ -801,17 +801,24 @@ document.addEventListener('DOMContentLoaded', () => {
       else { if(data.error&&estadoConexion){ estadoConexion.innerText=`El usuario @${data.user} no está en vivo, reintentando...`; estadoConexion.style.color='#f59e0b'; } }
     });
     socket.on('tts-limit-reached',(data)=>{ console.warn(data.mensaje); toast(data.mensaje,true); });
+    
+    // 👇 Comentarios del chat en vivo habilitados nuevamente para la bandeja y la voz
     socket.on('new-chat',(data)=>{
       if(esDuplicadoCliente(data.usuario,data.mensaje)) return;
+      
       reproducirVoz(data.textoVoz||data.mensaje, data.audioUrl);
       sonarComentario();
+
+      listaMensajes.push({ usuario: data.usuario || 'Usuario', mensaje: data.mensaje || '' });
+      if(listaMensajes.length > 5000) listaMensajes.shift();
+      actualizarBandejaComentarios();
     });
+
     socket.on('new-gift',(data)=>{
       const diamantes=data.diamondCount||data.diamonds||data.value||1;
       incrementarRegalos(1);
       onGift(diamantes);
 
-      // Valida si priorizar Pro en regalos está activo
       const modoProActivo = switchPriorizarPro ? switchPriorizarPro.checked : true;
       if (modoProActivo) {
         console.log('Regalo recibido: Sonido Pro activado, TTS silenciado.');
@@ -819,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(data.textoVoz||data.mensaje) reproducirVoz(data.textoVoz||data.mensaje, data.audioUrl);
       }
 
-      listaMensajes.push({usuario:data.usuario||'Regalo',mensaje:data.mensaje});
+      listaMensajes.push({usuario:data.usuario||'Regalo',mensaje:data.mensaje || `Envió regalo (${diamantes} diamantes)`});
       if(listaMensajes.length>5000) listaMensajes.shift();
       actualizarBandejaComentarios();
     });
@@ -852,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(footerCount) footerCount.innerText=total;
     if(perfilLiveCountComentarios) perfilLiveCountComentarios.innerText = total;
     if(!contenedorBox) return;
-    if(total===0){ contenedorBox.innerHTML=`<p style="color:#6b7280;text-align:center;font-size:14px;padding:20px;">Esperando regalos del LIVE...</p>`; return; }
+    if(total===0){ contenedorBox.innerHTML=`<p style="color:#6b7280;text-align:center;font-size:14px;padding:20px;">Esperando comentarios del LIVE...</p>`; return; }
     contenedorBox.innerHTML=listaMensajes.slice(-5000).reverse().map(msg=>`<div style="background:#15151f;padding:10px;border-radius:8px;border:1px solid #2a2a40;color:#fff;font-size:13px;display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><b style="color:#ff7a7a;white-space:nowrap;">${escapeHtml(msg.usuario)}:</b><span style="word-break:break-word;">${escapeHtml(msg.mensaje)}</span></div>`).join('');
   }
 
