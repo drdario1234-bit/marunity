@@ -920,34 +920,51 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Promise(res => setTimeout(res, ms));
   }
 
-  async function runStartup() {
+    async function runStartup() {
     if (!startupEl) return;
 
     setStartupProgress(5, 'Verificando servicios...');
-
     setStartupCheck('startup-google', 'loading', 'Verificando...');
-    await esperar(600);
+    await esperar(400);
 
+    let session = null;
     try {
       const clientAuth = window.supabaseAuth;
-      const { data } = await clientAuth.auth.getSession();
-      if (data?.session) {
+      if (clientAuth) {
+        // Intentamos hasta 3 veces obtener la sesión por si hay delay de red en el celu
+        for (let i = 0; i < 3; i++) {
+          const res = await clientAuth.auth.getSession();
+          if (res?.data?.session) {
+            session = res.data.session;
+            break;
+          }
+          await esperar(500);
+        }
+      }
+
+      if (session) {
         setStartupCheck('startup-google', 'success', 'Conectado');
       } else {
+        // Si de verdad no hay sesión tras los reintentos, mandamos al login limpiamente
         setStartupCheck('startup-google', 'error', 'Sin sesión');
         await esperar(800);
         window.location.href = 'login.html';
         return;
       }
     } catch(e) {
-      setStartupCheck('startup-google', 'error', 'Error');
+      setStartupCheck('startup-google', 'error', 'Error de red');
+      await esperar(800);
+      window.location.href = 'login.html';
+      return;
     }
+
     setStartupProgress(30, 'Cuenta verificada...');
     await esperar(400);
 
     setStartupCheck('startup-tiktok', 'loading', 'Recuperando...');
-    await esperar(600);
-    const userTikTok = localStorage.getItem('texyiu_tiktok_user_confirmado') || '';
+    await esperar(400);
+    const userTikTok = localStorage.getItem('texyiu_tiktok_user_confirmado') || localStorage.getItem('texyiu_tiktok_user') || '';
+    
     if (userTikTok) {
       setStartupCheck('startup-tiktok', 'success', 'Listo');
       const nickEl = document.getElementById('startup-nickname');
@@ -959,40 +976,43 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       setStartupCheck('startup-tiktok', 'error', 'Sin perfil');
     }
+    
     setStartupProgress(60, 'Perfil cargado...');
     await esperar(400);
 
     setStartupCheck('startup-server', 'loading', 'Comprobando...');
-    await esperar(600);
-    try {
-      await fetch(SERVER_URL + '/api/verificar-perfil?username=' + (userTikTok || 'marunity'), { cache: 'no-store' });
-      setStartupCheck('startup-server', 'success', 'En línea');
-    } catch(e) {
-      setStartupCheck('startup-server', 'success', 'En línea');
-    }
-    setStartupProgress(85, 'Casi listo...');
     await esperar(400);
+    setStartupCheck('startup-server', 'success', 'En línea');
+    
+    setStartupProgress(85, 'Casi listo...');
+    await esperar(300);
 
     setStartupCheck('startup-comments', 'loading', 'Recuperando...');
-    await esperar(500);
+    await esperar(300);
     setStartupCheck('startup-comments', 'success', 'Listo');
     setStartupProgress(100, 'Todo listo');
 
     if (startupTitle) startupTitle.textContent = 'Todo listo';
     if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
 
-    await esperar(600);
+    await esperar(400);
     startupEl.style.transition = 'opacity 0.4s ease';
     startupEl.style.opacity = '0';
 
     setTimeout(() => {
       startupEl.style.display = 'none';
+      // Si no tiene usuario de tiktok confirmado, le abrimos el onboarding suavemente
       if (!cuentaTikTokConfirmada()) {
         mostrarOnboarding();
+      } else {
+        // Si ya lo tiene, reconectamos automáticamente en segundo plano
+        const u = localStorage.getItem('texyiu_tiktok_user_confirmado');
+        if (u) {
+          conectarTikTok(u, true).catch(() => {});
+        }
       }
     }, 400);
   }
-
   runStartup();
 
 });
