@@ -777,7 +777,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     socket.on('tts-limit-reached',(data)=>{ console.warn(data.mensaje); toast(data.mensaje,true); });
     
-    // 👇 Comentarios del chat en vivo habilitados nuevamente para la bandeja y la voz
     socket.on('new-chat',(data)=>{
       if(esDuplicadoCliente(data.usuario,data.mensaje)) return;
       
@@ -895,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Promise(res => setTimeout(res, ms));
   }
 
-    async function runStartup() {
+  async function runStartup() {
     if (!startupEl) return;
 
     setStartupProgress(5, 'Verificando servicios...');
@@ -906,7 +905,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const clientAuth = window.supabaseAuth;
       if (clientAuth) {
-        // Intentamos hasta 3 veces obtener la sesión por si hay delay de red en el celu
         for (let i = 0; i < 3; i++) {
           const res = await clientAuth.auth.getSession();
           if (res?.data?.session) {
@@ -920,7 +918,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (session) {
         setStartupCheck('startup-google', 'success', 'Conectado');
       } else {
-        // Si de verdad no hay sesión tras los reintentos, mandamos al login limpiamente
         setStartupCheck('startup-google', 'error', 'Sin sesión');
         await esperar(800);
         window.location.href = 'login.html';
@@ -970,7 +967,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (startupTitle) startupTitle.textContent = 'Todo listo';
     if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
 
-       await esperar(400);
+    await esperar(400);
     startupEl.style.transition = 'opacity 0.4s ease';
     startupEl.style.opacity = '0';
 
@@ -981,11 +978,15 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         const u = localStorage.getItem('texyiu_tiktok_user_confirmado');
         if (u) {
+          // 🛡️ CORRECCIÓN CLAVE PARA REINGRESOS: Forzamos la consulta y pintura visual del perfil antes de conectar sockets
           try {
             const datosPerfil = await verificarPerfilTikTok(u);
-            actualizarPerfilLiveConectado(datosPerfil);
+            if (datosPerfil) {
+              actualizarPerfilLiveConectado(datosPerfil);
+            }
           } catch(e) {
-            console.warn("Usando datos locales de respaldo:", e);
+            console.warn("Usando datos locales de respaldo al reingresar:", e);
+            actualizarPerfilLiveConectado({ username: u, nickname: u, profilePicture: 'logo.png' });
           }
           conectarTikTok(u, true).catch(() => {});
         }
