@@ -942,29 +942,35 @@ document.addEventListener('DOMContentLoaded', () => {
       if (clientAuth) {
         for (let i = 0; i < 3; i++) {
           const res = await clientAuth.auth.getSession();
-          if (res?.data?.session) {
-            session = res.data.session;
-            break;
-          }
-          await esperar(500);
+
+if (res?.error) {
+  throw res.error;
+}
+
+if (res?.data?.session?.access_token) {
+  session = res.data.session;
+  break;
+}
+
+await esperar(500);
         }
       }
 
       if (session) {
         setStartupCheck('startup-google', 'success', 'Conectado');
-      } else {
-        setStartupCheck('startup-google', 'error', 'Sin sesión');
-        await esperar(800);
-        await window.cerrarSesionCompleta();
-        return;
-      }
-    } catch(e) {
-      setStartupCheck('startup-google', 'error', 'Error de red');
-      await esperar(800);
-      await window.cerrarSesionCompleta();
-      return;
-    }
+       } else {
+  setStartupCheck('startup-google', 'error', 'Sesión no disponible');
 
+  if (startupTitle) {
+    startupTitle.textContent = 'Necesitás iniciar sesión';
+  }
+
+  if (startupDesc) {
+    startupDesc.textContent = 'Podés volver a iniciar sesión para continuar.';
+  }
+
+  return;
+}
     setStartupProgress(30, 'Cuenta verificada...');
     await esperar(400);
 
@@ -979,15 +985,42 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      const resultado = await resp.json();
+      const resultado = await resp.json().catch(() => null);
 
-      // 🛑 SI EL SERVIDOR RECHAZA EL TOKEN O EL EMAIL YA NO EXISTE EN LA BASE
-      if (!resp.ok || !resultado.success) {
-        setStartupCheck('startup-tiktok', 'error', 'Sesión revocada');
-        await esperar(800);
-        await window.cerrarSesionCompleta();
-        return;
-      }
+      // 🛑 TOKEN RECHAZADO: la autenticación ya no es válida
+if (resp.status === 401) {
+  setStartupCheck('startup-tiktok', 'error', 'No se pudo validar la sesión');
+
+  if (startupTitle) {
+    startupTitle.textContent = 'No se pudo validar la sesión';
+  }
+
+  if (startupDesc) {
+    startupDesc.textContent = 'Volvé a intentarlo. Tu cuenta y configuración local se conservarán.';
+  }
+
+  return;
+}
+
+if (!resp.ok || !resultado || resultado.success !== true) {
+  console.error('[ERROR CONSULTAR VÍNCULO]', {
+    status: resp.status,
+    resultado
+  });
+
+  setStartupCheck(
+    'startup-tiktok',
+    'error',
+    'No se pudo verificar el vínculo'
+  );
+
+  // No cerrar sesión ni asumir que no existe un vínculo.
+  // Detener el inicio para evitar mostrar un onboarding incorrecto.
+  if (startupTitle) startupTitle.textContent = 'No se pudo verificar tu sesión';
+  if (startupDesc) startupDesc.textContent = 'Revisá tu conexión e intentá nuevamente.';
+
+  return;
+}
 
       if (resultado.vinculado && resultado.profile) {
         perfilVinculado = resultado.profile;
@@ -996,9 +1029,20 @@ document.addEventListener('DOMContentLoaded', () => {
         setStartupCheck('startup-tiktok', 'error', 'Sin vínculo');
       }
     } catch (err) {
-      console.warn("Error consultando vínculo en base de datos:", err);
-      setStartupCheck('startup-tiktok', 'error', 'Error red');
-    }
+  console.warn("Error consultando vínculo en base de datos:", err);
+
+  setStartupCheck('startup-tiktok', 'error', 'Error de conexión');
+
+  if (startupTitle) {
+    startupTitle.textContent = 'No se pudo consultar tu vínculo';
+  }
+
+  if (startupDesc) {
+    startupDesc.textContent = 'Revisá tu conexión e intentá nuevamente. Tu sesión y tus datos se conservarán.';
+  }
+
+  return;
+}
     
     setStartupProgress(60, 'Perfil procesado...');
     await esperar(400);
@@ -1022,7 +1066,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startupEl.style.transition = 'opacity 0.4s ease';
     startupEl.style.opacity = '0';
 
-    setTimeout(() => {
+        setTimeout(() => {
       startupEl.style.display = 'none';
 
       if (perfilVinculado) {
@@ -1031,6 +1075,23 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarOnboarding();
       }
     }, 600);
+
+  } catch (e) {
+    console.error('[ERROR RECUPERANDO SESIÓN]', e);
+
+    setStartupCheck('startup-google', 'error', 'No se pudo verificar');
+
+    if (startupTitle) {
+      startupTitle.textContent = 'No se pudo verificar la sesión';
+    }
+
+    if (startupDesc) {
+      startupDesc.textContent = 'Revisá tu conexión e intentá nuevamente.';
+    }
+
+    return;
   }
-  runStartup();
+}
+
+runStartup();
 });
