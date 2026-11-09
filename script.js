@@ -928,145 +928,149 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Promise(res => setTimeout(res, ms));
   }
 
-  // 🚀 INICIALIZACIÓN BLINDADA: VALIDACIÓN DE TOKEN HUÉRFANO
-  async function runStartup() {
-    if (!startupEl) return;
+  // INICIALIZACIÓN Y RECUPERACIÓN DE SESIÓN
+async function runStartup() {
+  if (!startupEl) return;
 
-    setStartupProgress(5, 'Verificando servicios...');
-    setStartupCheck('startup-google', 'loading', 'Verificando...');
-    await esperar(400);
+  setStartupProgress(5, 'Verificando servicios...');
+  setStartupCheck('startup-google', 'loading', 'Verificando...');
 
-    let session = null;
-    try {
-      const clientAuth = window.supabaseAuth;
-      if (clientAuth) {
-        for (let i = 0; i < 3; i++) {
-          const res = await clientAuth.auth.getSession();
+  let session = null;
+  let clientAuth = null;
 
-if (res?.error) {
-  throw res.error;
-}
+  try {
+    // Esperar a que auth.js inicialice Supabase.
+    for (let i = 0; i < 6; i++) {
+      clientAuth = window.supabaseAuth;
+      if (clientAuth) break;
+      await esperar(500);
+    }
 
-if (res?.data?.session?.access_token) {
-  session = res.data.session;
-  break;
-}
+    if (!clientAuth) {
+      console.error('[AUTH] Supabase no se inicializó.');
+      window.location.replace('login.html');
+      return;
+    }
 
-await esperar(500);
-        }
+    // Recuperar la sesión.
+    for (let i = 0; i < 5; i++) {
+      const res = await clientAuth.auth.getSession();
+
+      if (res?.error) throw res.error;
+
+      if (res?.data?.session?.access_token) {
+        session = res.data.session;
+        break;
       }
 
-      if (session) {
-        setStartupCheck('startup-google', 'success', 'Conectado');
-       } else {
-  setStartupCheck('startup-google', 'error', 'Sesión no disponible');
+      await esperar(500);
+    }
 
-  if (startupTitle) {
-    startupTitle.textContent = 'Necesitás iniciar sesión';
-  }
+    // Sin sesión: ir al login, no dejar la pantalla bloqueada.
+    if (!session?.access_token) {
+      setStartupCheck('startup-google', 'error', 'Sesión no disponible');
 
-  if (startupDesc) {
-    startupDesc.textContent = 'Podés volver a iniciar sesión para continuar.';
-  }
+      if (startupTitle) startupTitle.textContent = 'Necesitás iniciar sesión';
+      if (startupDesc) startupDesc.textContent = 'Redirigiendo al inicio de sesión...';
 
-  return;
-}
+      await esperar(700);
+      window.location.replace('login.html');
+      return;
+    }
+
+    setStartupCheck('startup-google', 'success', 'Conectado');
     setStartupProgress(30, 'Cuenta verificada...');
-    await esperar(400);
+    await esperar(300);
 
-    setStartupCheck('startup-tiktok', 'loading', 'Consultando base de datos...');
-    await esperar(400);
+    setStartupCheck('startup-tiktok', 'loading', 'Consultando vínculo...');
 
     let perfilVinculado = null;
+
     try {
-      const token = session.access_token;
       const resp = await fetch(`${SERVER_URL}/api/consultar-vinculo`, {
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Accept': 'application/json'
+        },
+        cache: 'no-store'
       });
-      
+
       const resultado = await resp.json().catch(() => null);
 
-      // 🛑 TOKEN RECHAZADO: la autenticación ya no es válida
-if (resp.status === 401) {
-  setStartupCheck('startup-tiktok', 'error', 'No se pudo validar la sesión');
+      if (resp.status === 401) {
+        throw new Error('La sesión no pudo ser validada. Volvé a intentarlo.');
+      }
 
-  if (startupTitle) {
-    startupTitle.textContent = 'No se pudo validar la sesión';
-  }
+      if (!resp.ok || !resultado || resultado.success !== true) {
+        console.error('[ERROR CONSULTAR VÍNCULO]', {
+          status: resp.status,
+          resultado
+        });
+        throw new Error('No se pudo consultar tu vínculo. Revisá tu conexión.');
+      }
 
-  if (startupDesc) {
-    startupDesc.textContent = 'Volvé a intentarlo. Tu cuenta y configuración local se conservarán.';
-  }
-
-  return;
-}
-
-if (!resp.ok || !resultado || resultado.success !== true) {
-  console.error('[ERROR CONSULTAR VÍNCULO]', {
-    status: resp.status,
-    resultado
-  });
-
-  setStartupCheck(
-    'startup-tiktok',
-    'error',
-    'No se pudo verificar el vínculo'
-  );
-
-  // No cerrar sesión ni asumir que no existe un vínculo.
-  // Detener el inicio para evitar mostrar un onboarding incorrecto.
-  if (startupTitle) startupTitle.textContent = 'No se pudo verificar tu sesión';
-  if (startupDesc) startupDesc.textContent = 'Revisá tu conexión e intentá nuevamente.';
-
-  return;
-}
-
-      if (resultado.vinculado && resultado.profile) {
+      if (resultado.vinculado === true && resultado.profile) {
         perfilVinculado = resultado.profile;
         setStartupCheck('startup-tiktok', 'success', 'Encontrado');
       } else {
-        setStartupCheck('startup-tiktok', 'error', 'Sin vínculo');
+        setStartupCheck('startup-tiktok', 'success', 'Sin vínculo');
       }
+
     } catch (err) {
-  console.warn("Error consultando vínculo en base de datos:", err);
+      console.warn('[CONSULTAR VÍNCULO]', err);
 
-  setStartupCheck('startup-tiktok', 'error', 'Error de conexión');
+      setStartupCheck('startup-tiktok', 'error', 'No se pudo verificar');
 
-  if (startupTitle) {
-    startupTitle.textContent = 'No se pudo consultar tu vínculo';
-  }
+      if (startupTitle) startupTitle.textContent = 'No se pudo verificar tu cuenta';
+      if (startupDesc) startupDesc.textContent = err.message || 'Revisá tu conexión e intentá nuevamente.';
 
-  if (startupDesc) {
-    startupDesc.textContent = 'Revisá tu conexión e intentá nuevamente. Tu sesión y tus datos se conservarán.';
-  }
+      // Crear un botón para reintentar sin cerrar la sesión.
+      let btnRetry = document.getElementById('startup-retry');
 
-  return;
-}
-    
+      if (!btnRetry) {
+        btnRetry = document.createElement('button');
+        btnRetry.id = 'startup-retry';
+        btnRetry.textContent = 'Reintentar';
+        btnRetry.style.cssText = 'margin-top:16px;padding:12px 24px;border:0;border-radius:10px;background:#a855f7;color:white;font-weight:bold;cursor:pointer;';
+        startupDesc?.parentElement?.appendChild(btnRetry);
+      }
+
+      btnRetry.onclick = () => {
+        btnRetry.remove();
+        startupEl.style.display = '';
+        startupEl.style.opacity = '1';
+        runStartup();
+      };
+
+      return;
+    }
+
     setStartupProgress(60, 'Perfil procesado...');
-    await esperar(400);
+    await esperar(300);
 
     setStartupCheck('startup-server', 'loading', 'Comprobando...');
-    await esperar(400);
+    await esperar(300);
     setStartupCheck('startup-server', 'success', 'En línea');
-    
+
     setStartupProgress(85, 'Casi listo...');
     await esperar(300);
 
     setStartupCheck('startup-comments', 'loading', 'Recuperando...');
     await esperar(300);
     setStartupCheck('startup-comments', 'success', 'Listo');
+
     setStartupProgress(100, 'Todo listo');
 
     if (startupTitle) startupTitle.textContent = 'Todo listo';
     if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
 
     await esperar(400);
+
     startupEl.style.transition = 'opacity 0.4s ease';
     startupEl.style.opacity = '0';
 
-        setTimeout(() => {
+    setTimeout(() => {
       startupEl.style.display = 'none';
 
       if (perfilVinculado) {
@@ -1081,15 +1085,25 @@ if (!resp.ok || !resultado || resultado.success !== true) {
 
     setStartupCheck('startup-google', 'error', 'No se pudo verificar');
 
-    if (startupTitle) {
-      startupTitle.textContent = 'No se pudo verificar la sesión';
+    if (startupTitle) startupTitle.textContent = 'No se pudo verificar la sesión';
+    if (startupDesc) startupDesc.textContent = 'Revisá tu conexión e intentá nuevamente.';
+
+    let btnRetry = document.getElementById('startup-retry');
+
+    if (!btnRetry) {
+      btnRetry = document.createElement('button');
+      btnRetry.id = 'startup-retry';
+      btnRetry.textContent = 'Reintentar';
+      btnRetry.style.cssText = 'margin-top:16px;padding:12px 24px;border:0;border-radius:10px;background:#a855f7;color:white;font-weight:bold;cursor:pointer;';
+      startupDesc?.parentElement?.appendChild(btnRetry);
     }
 
-    if (startupDesc) {
-      startupDesc.textContent = 'Revisá tu conexión e intentá nuevamente.';
-    }
-
-    return;
+    btnRetry.onclick = () => {
+      btnRetry.remove();
+      startupEl.style.display = '';
+      startupEl.style.opacity = '1';
+      runStartup();
+    };
   }
 }
 
