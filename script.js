@@ -1,3 +1,25 @@
+
+// PARCHE DEBUG - EL ERROR SE VE SÍ O SÍ
+window.mostrarErrorReal = function(msg) {
+  const texto = 'ERROR REAL: ' + (msg || 'sin mensaje');
+  console.error(texto);
+  alert(texto);
+  // Caja roja flotante que queda arriba de todo, aunque el modal se cierre
+  let caja = document.getElementById('caja-error-debug');
+  if (!caja) {
+    caja = document.createElement('div');
+    caja.id = 'caja-error-debug';
+    caja.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;z-index:99999;background:#ff0000;color:white;padding:16px;border-radius:10px;font-size:15px;font-weight:bold;';
+    document.body.appendChild(caja);
+  }
+  caja.style.display = 'block';
+  caja.textContent = texto;
+};
+
+// Si algo revienta en cualquier parte, también lo muestra
+window.addEventListener('error', (e) => {
+  window.mostrarErrorReal(e.message || 'Error desconocido');
+});
 document.addEventListener('DOMContentLoaded', () => {
   console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Clean Session Secured)');
 
@@ -238,7 +260,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.style.overflow='hidden';
   }
   function cerrarModalPerfil(){ if(!modalConfirmarTikTok) return; modalConfirmarTikTok.classList.add('hidden'); document.body.style.overflow=onboardingScreen&&!onboardingScreen.classList.contains('hidden')?'hidden':''; }
-  function mostrarErrorConfirmacion(msg){ detenerContadorRender(); if(!confirmError) return; confirmError.textContent=msg||'Ocurrió un error.'; confirmError.classList.add('visible'); }
+  function mostrarErrorConfirmacion(msg){
+  detenerContadorRender();
+  window.mostrarErrorReal(msg);
+  if(!confirmError) return;
+  confirmError.textContent = msg || 'Ocurrió un error.';
+  confirmError.classList.add('visible');
+  confirmError.style.display = 'block';
+  confirmError.style.color = '#ff7a7a';
+}
   function ocultarErrorConfirmacion(){ if(!confirmError) return; confirmError.textContent=''; confirmError.classList.remove('visible'); }
 
   async function iniciarVerificacionTikTok(valorUsuario,origen='onboarding'){
@@ -268,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if(btnVolverTikTok) btnVolverTikTok.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
   if(modalTikTokBackdrop) modalTikTokBackdrop.addEventListener('click',()=>{ if(conexionEnCurso) return; cerrarModalPerfil(); });
 
-  if (btnConfirmarTikTok) {
+    if (btnConfirmarTikTok) {
     btnConfirmarTikTok.addEventListener('click', async () => {
       if (conexionEnCurso || !perfilPendiente) return;
 
@@ -927,165 +957,103 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // INICIALIZACIÓN Y RECUPERACIÓN DE SESIÓN
-  async function runStartup() {
-    if (!startupEl) return;
+async function runStartup() {
+  if (!startupEl) return;
 
-    setStartupProgress(5, 'Verificando servicios...');
-    setStartupCheck('startup-google', 'loading', 'Verificando...');
+  setStartupProgress(5, 'Verificando servicios...');
+  setStartupCheck('startup-google', 'loading', 'Verificando...');
 
-    let session = null;
-    let clientAuth = null;
+  let session = null;
+  let clientAuth = null;
+
+  try {
+    // Esperar a que auth.js inicialice Supabase.
+    for (let i = 0; i < 6; i++) {
+      clientAuth = window.supabaseAuth;
+      if (clientAuth) break;
+      await esperar(500);
+    }
+
+    if (!clientAuth) {
+      console.error('[AUTH] Supabase no se inicializó.');
+      window.location.replace('login.html');
+      return;
+    }
+
+    // Recuperar la sesión.
+    for (let i = 0; i < 5; i++) {
+      const res = await clientAuth.auth.getSession();
+
+      if (res?.error) throw res.error;
+
+      if (res?.data?.session?.access_token) {
+        session = res.data.session;
+        break;
+      }
+
+      await esperar(500);
+    }
+
+    // Sin sesión: ir al login, no dejar la pantalla bloqueada.
+    if (!session?.access_token) {
+      setStartupCheck('startup-google', 'error', 'Sesión no disponible');
+
+      if (startupTitle) startupTitle.textContent = 'Necesitás iniciar sesión';
+      if (startupDesc) startupDesc.textContent = 'Redirigiendo al inicio de sesión...';
+
+      await esperar(700);
+      window.location.replace('login.html');
+      return;
+    }
+
+    setStartupCheck('startup-google', 'success', 'Conectado');
+    setStartupProgress(30, 'Cuenta verificada...');
+    await esperar(300);
+
+    setStartupCheck('startup-tiktok', 'loading', 'Consultando vínculo...');
+
+    let perfilVinculado = null;
 
     try {
-      // Esperar a que auth.js inicialice Supabase.
-      for (let i = 0; i < 6; i++) {
-        clientAuth = window.supabaseAuth;
-        if (clientAuth) break;
-        await esperar(500);
+      const resp = await fetch(`${SERVER_URL}/api/consultar-vinculo`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Accept': 'application/json'
+        },
+        cache: 'no-store'
+      });
+
+      const resultado = await resp.json().catch(() => null);
+
+      if (resp.status === 401) {
+        throw new Error('La sesión no pudo ser validada. Volvé a intentarlo.');
       }
 
-      if (!clientAuth) {
-        console.error('[AUTH] Supabase no se inicializó.');
-        window.location.replace('login.html');
-        return;
-      }
-
-      // Recuperar la sesión.
-      for (let i = 0; i < 5; i++) {
-        const res = await clientAuth.auth.getSession();
-
-        if (res?.error) throw res.error;
-
-        if (res?.data?.session?.access_token) {
-          session = res.data.session;
-          break;
-        }
-
-        await esperar(500);
-      }
-
-      // Sin sesión: ir al login, no dejar la pantalla bloqueada.
-      if (!session?.access_token) {
-        setStartupCheck('startup-google', 'error', 'Sesión no disponible');
-
-        if (startupTitle) startupTitle.textContent = 'Necesitás iniciar sesión';
-        if (startupDesc) startupDesc.textContent = 'Redirigiendo al inicio de sesión...';
-
-        await esperar(700);
-        window.location.replace('login.html');
-        return;
-      }
-
-      setStartupCheck('startup-google', 'success', 'Conectado');
-      setStartupProgress(30, 'Cuenta verificada...');
-      await esperar(300);
-
-      setStartupCheck('startup-tiktok', 'loading', 'Consultando vínculo...');
-
-      let perfilVinculado = null;
-
-      try {
-        const resp = await fetch(`${SERVER_URL}/api/consultar-vinculo`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Accept': 'application/json'
-          },
-          cache: 'no-store'
+      if (!resp.ok || !resultado || resultado.success !== true) {
+        console.error('[ERROR CONSULTAR VÍNCULO]', {
+          status: resp.status,
+          resultado
         });
-
-        const resultado = await resp.json().catch(() => null);
-
-        if (resp.status === 401) {
-          throw new Error('La sesión no pudo ser validada. Volvé a intentarlo.');
-        }
-
-        if (!resp.ok || !resultado || resultado.success !== true) {
-          console.error('[ERROR CONSULTAR VÍNCULO]', {
-            status: resp.status,
-            resultado
-          });
-          throw new Error('No se pudo consultar tu vínculo. Revisá tu conexión.');
-        }
-
-        if (resultado.vinculado === true && resultado.profile) {
-          perfilVinculado = resultado.profile;
-          setStartupCheck('startup-tiktok', 'success', 'Encontrado');
-        } else {
-          setStartupCheck('startup-tiktok', 'success', 'Sin vínculo');
-        }
-
-      } catch (err) {
-        console.warn('[CONSULTAR VÍNCULO]', err);
-
-        setStartupCheck('startup-tiktok', 'error', 'No se pudo verificar');
-
-        if (startupTitle) startupTitle.textContent = 'No se pudo verificar tu cuenta';
-        if (startupDesc) startupDesc.textContent = err.message || 'Revisá tu conexión e intentá nuevamente.';
-
-        // Crear un botón para reintentar sin cerrar la sesión.
-        let btnRetry = document.getElementById('startup-retry');
-
-        if (!btnRetry) {
-          btnRetry = document.createElement('button');
-          btnRetry.id = 'startup-retry';
-          btnRetry.textContent = 'Reintentar';
-          btnRetry.style.cssText = 'margin-top:16px;padding:12px 24px;border:0;border-radius:10px;background:#a855f7;color:white;font-weight:bold;cursor:pointer;';
-          startupDesc?.parentElement?.appendChild(btnRetry);
-        }
-
-        btnRetry.onclick = () => {
-          btnRetry.remove();
-          startupEl.style.display = '';
-          startupEl.style.opacity = '1';
-          runStartup();
-        };
-
-        return;
+        throw new Error('No se pudo consultar tu vínculo. Revisá tu conexión.');
       }
 
-      setStartupProgress(60, 'Perfil procesado...');
-      await esperar(300);
+      if (resultado.vinculado === true && resultado.profile) {
+        perfilVinculado = resultado.profile;
+        setStartupCheck('startup-tiktok', 'success', 'Encontrado');
+      } else {
+        setStartupCheck('startup-tiktok', 'success', 'Sin vínculo');
+      }
 
-      setStartupCheck('startup-server', 'loading', 'Comprobando...');
-      await esperar(300);
-      setStartupCheck('startup-server', 'success', 'En línea');
+    } catch (err) {
+      console.warn('[CONSULTAR VÍNCULO]', err);
 
-      setStartupProgress(85, 'Casi listo...');
-      await esperar(300);
+      setStartupCheck('startup-tiktok', 'error', 'No se pudo verificar');
 
-      setStartupCheck('startup-comments', 'loading', 'Recuperando...');
-      await esperar(300);
-      setStartupCheck('startup-comments', 'success', 'Listo');
+      if (startupTitle) startupTitle.textContent = 'No se pudo verificar tu cuenta';
+      if (startupDesc) startupDesc.textContent = err.message || 'Revisá tu conexión e intentá nuevamente.';
 
-      setStartupProgress(100, 'Todo listo');
-
-      if (startupTitle) startupTitle.textContent = 'Todo listo';
-      if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
-
-      await esperar(400);
-
-      startupEl.style.transition = 'opacity 0.4s ease';
-      startupEl.style.opacity = '0';
-
-      setTimeout(() => {
-        startupEl.style.display = 'none';
-
-        if (perfilVinculado) {
-          mostrarModalPerfil(perfilVinculado);
-        } else {
-          mostrarOnboarding();
-        }
-      }, 600);
-
-    } catch (e) {
-      console.error('[ERROR RECUPERANDO SESIÓN]', e);
-
-      setStartupCheck('startup-google', 'error', 'No se pudo verificar');
-
-      if (startupTitle) startupTitle.textContent = 'No se pudo verificar la sesión';
-      if (startupDesc) startupDesc.textContent = 'Revisá tu conexión e intentá nuevamente.';
-
+      // Crear un botón para reintentar sin cerrar la sesión.
       let btnRetry = document.getElementById('startup-retry');
 
       if (!btnRetry) {
@@ -1102,8 +1070,70 @@ document.addEventListener('DOMContentLoaded', () => {
         startupEl.style.opacity = '1';
         runStartup();
       };
-    }
-  }
 
-  runStartup();
+      return;
+    }
+
+    setStartupProgress(60, 'Perfil procesado...');
+    await esperar(300);
+
+    setStartupCheck('startup-server', 'loading', 'Comprobando...');
+    await esperar(300);
+    setStartupCheck('startup-server', 'success', 'En línea');
+
+    setStartupProgress(85, 'Casi listo...');
+    await esperar(300);
+
+    setStartupCheck('startup-comments', 'loading', 'Recuperando...');
+    await esperar(300);
+    setStartupCheck('startup-comments', 'success', 'Listo');
+
+    setStartupProgress(100, 'Todo listo');
+
+    if (startupTitle) startupTitle.textContent = 'Todo listo';
+    if (startupDesc) startupDesc.textContent = 'Tu espacio está preparado.';
+
+    await esperar(400);
+
+    startupEl.style.transition = 'opacity 0.4s ease';
+    startupEl.style.opacity = '0';
+
+    setTimeout(() => {
+      startupEl.style.display = 'none';
+
+      if (perfilVinculado) {
+        mostrarModalPerfil(perfilVinculado);
+      } else {
+        mostrarOnboarding();
+      }
+    }, 600);
+
+  } catch (e) {
+    console.error('[ERROR RECUPERANDO SESIÓN]', e);
+
+    setStartupCheck('startup-google', 'error', 'No se pudo verificar');
+
+    if (startupTitle) startupTitle.textContent = 'No se pudo verificar la sesión';
+    if (startupDesc) startupDesc.textContent = 'Revisá tu conexión e intentá nuevamente.';
+
+    let btnRetry = document.getElementById('startup-retry');
+
+    if (!btnRetry) {
+      btnRetry = document.createElement('button');
+      btnRetry.id = 'startup-retry';
+      btnRetry.textContent = 'Reintentar';
+      btnRetry.style.cssText = 'margin-top:16px;padding:12px 24px;border:0;border-radius:10px;background:#a855f7;color:white;font-weight:bold;cursor:pointer;';
+      startupDesc?.parentElement?.appendChild(btnRetry);
+    }
+
+    btnRetry.onclick = () => {
+      btnRetry.remove();
+      startupEl.style.display = '';
+      startupEl.style.opacity = '1';
+      runStartup();
+    };
+  }
+}
+
+runStartup();
 });
