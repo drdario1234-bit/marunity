@@ -1,29 +1,8 @@
-
-// PARCHE DEBUG - EL ERROR SE VE SÍ O SÍ
-window.mostrarErrorReal = function(msg) {
-  const texto = 'ERROR REAL: ' + (msg || 'sin mensaje');
-  console.error(texto);
-  alert(texto);
-  // Caja roja flotante que queda arriba de todo, aunque el modal se cierre
-  let caja = document.getElementById('caja-error-debug');
-  if (!caja) {
-    caja = document.createElement('div');
-    caja.id = 'caja-error-debug';
-    caja.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;z-index:99999;background:#ff0000;color:white;padding:16px;border-radius:10px;font-size:15px;font-weight:bold;';
-    document.body.appendChild(caja);
-  }
-  caja.style.display = 'block';
-  caja.textContent = texto;
-};
-
-// Si algo revienta en cualquier parte, también lo muestra
-window.addEventListener('error', (e) => {
-  window.mostrarErrorReal(e.message || 'Error desconocido');
-});
 document.addEventListener('DOMContentLoaded', () => {
   console.log('TexYiu LIVE Tex - V9 RED BLACK (Optimized & Clean Session Secured)');
 
   const SERVER_URL = 'https://bot-tiktok-tslw.onrender.com';
+  
   let socket = null;
   let listaMensajes = [];
 
@@ -50,7 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const labelVel = document.getElementById('label-velocidad');
   const labelTono = document.getElementById('label-tono');
   const labelVol = document.getElementById('label-volumen');
+  const ES_DEBUG = new URLSearchParams(window.location.search).has('debug');
 
+  function traducirError(msg) {
+  const original = String(msg || '');
+  const m = original.toLowerCase();
+  // Si ya es un mensaje lindo, no lo toques
+  if (m.startsWith('conectado') || m.startsWith('en vivo') || m.startsWith('live') || m.startsWith('ingresá') || m.startsWith('esperá') || m.startsWith('ya tenés') || m.startsWith('sin internet') || m.startsWith('no se encontró')) return original;
+  if (m.includes('duplicate key') || m.includes('unique constraint') || m.includes('ya existe') || m.includes('ya_vinculado')) return 'Ya tenés una cuenta vinculada. Si querés cambiarla, pedí el cambio desde Soporte.';
+  if (m.includes('row-level') || m.includes('rls') || m.includes('policy')) return 'No se pudo guardar tu vínculo. Intentá de nuevo en unos segundos.';
+  if (m.includes('timeout') || m.includes('abort') || m.includes('despertar')) return 'El servidor está despertando, esperá 10 segundos y tocá Confirmar de nuevo.';
+  if (m.includes('failed to fetch') || m.includes('network') || m.includes('sin internet')) return 'Sin internet. Revisá tu conexión y probá de nuevo.';
+  if (m.includes('401') || m.includes('sesión') || m.includes('token')) return 'Tu sesión venció, volvé a entrar.';
+  return 'No se pudo guardar tu vínculo. Intentá de nuevo.';
+}
   function getVolumenReal() {
     const v = parseFloat(inputVol?.value);
     if (isNaN(v)) return 1;
@@ -183,8 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function escapeHtml(text){ const div=document.createElement('div'); div.textContent=text||''; return div.innerHTML; }
-  function toast(msg,isError=true){ if(!estadoConexion) return; detenerContadorRender(); estadoConexion.innerText=msg; estadoConexion.style.color=isError?'#ff7a7a':'#4ade80'; }
-  function setOnboardingStatus(msg,isError=false){ if(!onboardingStatus) return; detenerContadorRender(); onboardingStatus.innerText=msg||''; onboardingStatus.style.color=isError?'#ff7a7a':'#a1a1b5'; }
+  function toast(msg,isError=true){ if(!estadoConexion) return; detenerContadorRender(); estadoConexion.innerText = (isError && !ES_DEBUG) ? traducirError(msg) : (msg||''); estadoConexion.style.color=isError?'#ff7a7a':'#4ade80'; }
+  function setOnboardingStatus(msg,isError=false){ if(!onboardingStatus) return; detenerContadorRender(); onboardingStatus.innerText = (isError && !ES_DEBUG) ? traducirError(msg) : (msg||''); onboardingStatus.style.color=isError?'#ff7a7a':'#a1a1b5'; }
   function setLiveBadge(conectado,texto){
     if(!liveBadge) return;
     liveBadge.innerHTML=`<span></span> ${escapeHtml(texto)}`;
@@ -262,9 +254,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function cerrarModalPerfil(){ if(!modalConfirmarTikTok) return; modalConfirmarTikTok.classList.add('hidden'); document.body.style.overflow=onboardingScreen&&!onboardingScreen.classList.contains('hidden')?'hidden':''; }
   function mostrarErrorConfirmacion(msg){
   detenerContadorRender();
-  window.mostrarErrorReal(msg);
   if(!confirmError) return;
-  confirmError.textContent = msg || 'Ocurrió un error.';
+  const textoFinal = ES_DEBUG ? msg : traducirError(msg);
+  confirmError.textContent = textoFinal || 'Ocurrió un error.';
+  console.error('[CONFIRMAR TIKTOK]', msg);
   confirmError.classList.add('visible');
   confirmError.style.display = 'block';
   confirmError.style.color = '#ff7a7a';
@@ -439,9 +432,13 @@ document.addEventListener('DOMContentLoaded', () => {
         body:JSON.stringify({username:usuario}) 
       });
 
-      let resultado; try{ resultado=await respuesta.json(); } catch(e){ throw new Error('El servidor respondió con formato inválido.'); }
-      if(!respuesta.ok||!resultado||!resultado.success) throw new Error(resultado?.error||resultado?.message||`No se pudo conectar (${respuesta.status})`);
-      
+      let resultado; try{ resultado=await respuesta.json(); } catch(e){ resultado={}; }
+      if(!respuesta.ok||!resultado||!resultado.success){
+        const err = new Error(resultado?.error||resultado?.message||`No se pudo conectar (${respuesta.status})`);
+        err.code = resultado?.code || '';
+        err.status = respuesta.status;
+        throw err;
+      }
       detenerContadorRender();
       localStorage.setItem('texyiu_tiktok_user',usuario);
       localStorage.setItem('texyiu_tiktok_user_confirmado',usuario);
@@ -470,6 +467,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(error){
       detenerContadorRender();
       if(btnConectar){ btnConectar.textContent='Verificar'; btnConectar.disabled=false; btnConectar.style.background=''; }
+            if(error.status === 401 || error.status === 403){
+        await window.cerrarSesionCompleta();
+        return;
+            }
       let msgError = error?.message||'No se pudo conectar';
       if(msgError.includes('Failed to fetch') || msgError.toLowerCase().includes('fetch')) {
         msgError = 'Sin internet. Revisá tu conexión y probá de nuevo.';
@@ -1026,9 +1027,12 @@ async function runStartup() {
 
       const resultado = await resp.json().catch(() => null);
 
-      if (resp.status === 401) {
-        throw new Error('La sesión no pudo ser validada. Volvé a intentarlo.');
-      }
+      if (resp.status === 401 || resp.status === 403) {
+  await clientAuth.auth.signOut();
+  localStorage.clear();
+  window.location.replace('login.html');
+  return;
+}
 
       if (!resp.ok || !resultado || resultado.success !== true) {
         console.error('[ERROR CONSULTAR VÍNCULO]', {
