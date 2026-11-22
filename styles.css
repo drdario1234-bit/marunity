@@ -2203,3 +2203,27 @@ footer b {
 .voice-card-info strong {
   font-size: 1rem !important;
 }
+/* LOGUITO GRANDE DE VERDAD - arriba, sin apretar */
+.voice-card {
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  padding: 16px 8px !important;
+  gap: 10px !important;
+}
+
+.voice-card-icon {
+  width: 82px !important;
+  height: 82px !important;
+  min-width: 82px !important;
+  min-height: 82px !important;
+}
+
+.voice-card-info {
+  align-items: center !important;
+  text-align: center !important;
+}
+
+.voice-card-check, .voice-card-lock {
+  display: none !important;
+}
