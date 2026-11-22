@@ -2227,24 +2227,3 @@ footer b {
 .voice-card-check, .voice-card-lock {
   display: none !important;
 }
-/* IMAGEN MAS GRANDE ADENTRO - el redondo queda igual */
-.voice-card-icon {
-  width: 50px !important;
-  height: 50px !important;
-  min-width: 50px !important;
-  min-height: 50px !important;
-  overflow: visible !important;
-  background: transparent !important;
-}
-
-.voice-card-icon img {
-  width: 78px !important;
-  height: 78px !important;
-  max-width: none !important;
-  object-fit: cover !important;
-  border-radius: 50% !important;
-  /* la centra para que no se vaya para un costado */
-  margin-left: -14px !important;
-  margin-top: -14px !important;
-  display: block !important;
-}
