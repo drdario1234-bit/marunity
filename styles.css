@@ -2180,8 +2180,8 @@ footer b {
 .sidebar:not(.hidden) { visibility: visible; }
 /* FIX LOGUITO ROTO - que llene el circulo */
 .voice-card-icon {
-  width: 46px !important;
-  height: 46px !important;
+  width: 48px !important;
+  height: 48px !important;
   min-width: 46px !important;
   padding: 0 !important;
   overflow: hidden !important;
