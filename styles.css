@@ -2178,21 +2178,28 @@ footer b {
 }
 .sidebar.hidden { visibility: hidden; pointer-events: none; }
 .sidebar:not(.hidden) { visibility: visible; }
-/* FIX LOGUITO ROTO - que llene el circulo */
+/* SUBIR MAS DE 50px - tarjeta + loguito juntos */
+.voice-card {
+  padding: 16px !important;
+  gap: 14px !important;
+}
+
 .voice-card-icon {
-  width: 50px !important;
-  height: 50px !important;
-  min-width: 50px !important;
+  width: 68px !important;
+  height: 68px !important;
+  min-width: 68px !important;
+  min-height: 68px !important;
   padding: 0 !important;
   overflow: hidden !important;
   border-radius: 50% !important;
-  background: transparent !important;
 }
 
 .voice-card-icon img {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  border-radius: 50% !important;
-  display: block !important;
+}
+
+.voice-card-info strong {
+  font-size: 1rem !important;
 }
