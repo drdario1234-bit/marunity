@@ -2178,3 +2178,37 @@ footer b {
 }
 .sidebar.hidden { visibility: hidden; pointer-events: none; }
 .sidebar:not(.hidden) { visibility: visible; }
+/* === LOGUITOS DEL PANEL - GRANDES === */
+.sidebar nav a {
+  padding: 13px 14px !important;
+  font-size: 1rem !important;
+  gap: 14px !important;
+}
+
+.nav-icon {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  min-height: 30px !important;
+}
+
+/* === LOGUITOS DE VOCES - mujer y pibe === */
+.voice-card {
+  padding: 14px !important;
+}
+
+.voice-card-icon {
+  width: 46px !important;
+  height: 46px !important;
+}
+
+.voice-card-icon img {
+  width: 32px !important;
+  height: 32px !important;
+  object-fit: cover !important;
+}
+
+.voice-card-icon svg {
+  width: 30px !important;
+  height: 30px !important;
+}
