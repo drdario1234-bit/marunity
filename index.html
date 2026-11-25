@@ -516,6 +516,18 @@
 </div>
 
 <script src="premium-config.js"></script>
+<script>
+  window.PREMIUM_DATA = Object.assign({
+    plan_nombre: "PRO",
+    precio_mensual: "$5.99 USD",
+    precio_anual: "$59.99 USD",
+    link_paypal_mensual: "",
+    link_mp_mensual: "",
+    link_paypal_anual: "",
+    link_mp_anual: ""
+  }, window.PREMIUM_DATA || {});
+  var PREMIUM_DATA = window.PREMIUM_DATA;
+</script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="script.js"></script>
