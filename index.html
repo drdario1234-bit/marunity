@@ -96,7 +96,6 @@
         Privacidad
       </a>
       <div class="nav-separator"></div>
-      <!-- AJUSTE DE SESION - MISMO ESTILO QUE LOS DEMAS -->
       <a href="#" id="btn-sesion" class="nav-item">
         <svg class="nav-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Ajuste de sesión <span id="sesion-estado-dot" class="sesion-dot"></span>
@@ -230,7 +229,7 @@
       <div class="voice-category">
         <div class="voice-category-title-min"><span>Gratis</span></div>
         <div class="voice-grid" id="free-voice-grid">
-          <button type="button" class="voice-card active" data-voice="mujer_latina"><div class="voice-card-icon"><img src="1103260.png" alt="Latina"></div><div class="voice-card-info"><strong>Latina</strong><span>Femenina</span></div><div class="voice-card-check">✓</div></button>
+          <button type="button" class="voice-card" data-voice="mujer_latina"><div class="voice-card-icon"><img src="1103260.png" alt="Latina"></div><div class="voice-card-info"><strong>Latina</strong><span>Femenina</span></div><div class="voice-card-check">✓</div></button>
           <button type="button" class="voice-card" data-voice="hombre_latino"><div class="voice-card-icon"><img src="1103261.png" alt="Latino"></div><div class="voice-card-info"><strong>Latino</strong><span>Masculina</span></div><div class="voice-card-check">✓</div></button>
           <button type="button" class="voice-card" data-voice="espana"><div class="voice-card-icon"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="voice-card-info"><strong>España</strong><span>Española</span></div><div class="voice-card-check">✓</div></button>
           <button type="button" class="voice-card" data-voice="android_extra"><div class="voice-card-icon"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="voice-card-info"><strong>Natural+</strong><span>Alternativa</span></div><div class="voice-card-check">✓</div></button>
@@ -295,8 +294,6 @@
       <div><b style="font-size: 18px;">Ajustes de Configuración</b><p style="font-size: 13px; color: #94a3b8;">Personaliza el comportamiento general de MarUnity LIVE</p></div>
     </div>
     <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
-      
-      <!-- NUEVO SWITCH PARA PRIORIZAR SONIDO PRO EN REGALOS -->
       <div class="config-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
         <h3 style="font-size: 15px; color: #a855f7; margin-bottom: 12px; text-transform: uppercase;">👑 AUDIO Y REGALOS PRO</h3>
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0;">
@@ -310,11 +307,11 @@
           </label>
         </div>
       </div>
-
       <div class="config-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
         <h3 style="font-size: 15px; color: #a855f7; margin-bottom: 12px; text-transform: uppercase;">🔊 LECTURA Y TTS</h3>
         <div class="voice-section" style="margin-bottom: 15px;"><label>VELOCIDAD DE LA VOZ</label><div style="display: flex; align-items: center; gap: 12px;"><input type="range" id="range-velocidad-voz" min="0.5" max="2" step="0.1" value="1" style="flex: 1; accent-color: #a855f7;"><span id="label-velocidad" style="color: #a855f7;">1.0x</span></div></div>
-        <div class="voice-section" style="margin-bottom: 15px;"><label>TONO Y AGUDO</label><div style="display: flex; align-items: center; gap: 12px;"><input type="range" id="range-tono-voz" min="0.5" max="1.5" step="0.1" value="1" style="flex: 1; accent-color: #a855f7;"><span id="label-tono" style="color: #a855f7;">1.0</span></div></div>         <div class="voice-section" style="margin-bottom: 15px;"><label>VOLUMEN DE LA VOZ</label><div style="display: flex; align-items: center; gap: 12px;"><input type="range" id="range-volumen" min="0" max="1" step="0.1" value="1" style="flex: 1; accent-color: #a855f7;"><span id="label-volumen" style="color: #a855f7;">100%</span></div></div>
+        <div class="voice-section" style="margin-bottom: 15px;"><label>TONO Y AGUDO</label><div style="display: flex; align-items: center; gap: 12px;"><input type="range" id="range-tono-voz" min="0.5" max="1.5" step="0.1" value="1" style="flex: 1; accent-color: #a855f7;"><span id="label-tono" style="color: #a855f7;">1.0</span></div></div>
+        <div class="voice-section" style="margin-bottom: 15px;"><label>VOLUMEN DE LA VOZ</label><div style="display: flex; align-items: center; gap: 12px;"><input type="range" id="range-volumen" min="0" max="1" step="0.1" value="1" style="flex: 1; accent-color: #a855f7;"><span id="label-volumen" style="color: #a855f7;">100%</span></div></div>
       </div>
       <div class="config-group" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
         <h3 style="font-size: 15px; color: #a855f7; margin-bottom: 12px;">🛡️ FILTROS Y SEGURIDAD</h3>
@@ -330,7 +327,6 @@
     </div>
   </section>
 
-
   <section class="panel hidden" id="panel-sonidos" style="padding:0; background:transparent; border:0;">
     <iframe src="sonidos.html" id="iframe-sonidos" style="width:100%; height:85vh; border:0; border-radius:16px; background:#0F0F13;"></iframe>
   </section>
@@ -340,11 +336,11 @@
   <section class="panel hidden" id="panel-premium">
     <div class="card" style="text-align:center;">
       <h2>👑 Pasate a PRO</h2>
-      <p id="premium-precio-mensual" style="font-size:32px; font-weight:900; color:#A855F7; margin: 10px 0;">$4.99 USD</p>
+      <p id="premium-precio-mensual" style="font-size:32px; font-weight:900; color:#A855F7; margin: 10px 0;">$5.99 USD</p>
       <p class="muted">por mes</p>
       <div id="premium-features" style="text-align:left; margin: 20px 0;"></div>
       <button id="btn-comprar-premium" class="btn-save" style="width:100%; background: linear-gradient(90deg, #A855F7, #FF0050);">COMPRAR AHORA</button>
-      <p id="premium-precio-anual" class="muted small" style="margin-top:10px;"></p>
+      <p id="premium-precio-anual" class="muted small" style="margin-top:10px;">O anual: $59.99 USD por año</p>
     </div>
   </section>
 
@@ -419,9 +415,7 @@
 
 <!-- PANTALLA DE PREPARACIÓN MARUNITY -->
 <div id="marunity-startup" class="marunity-startup">
-
   <div class="startup-card">
-
     <div class="startup-brand">
       <img src="logo.png" alt="MarUnity">
       <div>
@@ -429,19 +423,14 @@
         <span>LIVE Tex</span>
       </div>
     </div>
-
     <div class="startup-loader">
       <div class="startup-spinner"></div>
     </div>
-
     <h2 id="startup-title">Preparando tu espacio</h2>
-
     <p id="startup-description">
       Estamos verificando tu cuenta y recuperando tu configuración.
     </p>
-
     <div class="startup-checks">
-
       <div class="startup-check" id="startup-google">
         <div class="startup-check-info">
           <strong>Credenciales de acceso</strong>
@@ -449,7 +438,6 @@
         </div>
         <span class="startup-status">Pendiente</span>
       </div>
-
       <div class="startup-check" id="startup-tiktok">
         <div class="startup-check-info">
           <strong>Perfil de TikTok</strong>
@@ -457,7 +445,6 @@
         </div>
         <span class="startup-status">Pendiente</span>
       </div>
-
       <div class="startup-check" id="startup-server">
         <div class="startup-check-info">
           <strong>MarUnity</strong>
@@ -465,7 +452,6 @@
         </div>
         <span class="startup-status">Pendiente</span>
       </div>
-
       <div class="startup-check" id="startup-comments">
         <div class="startup-check-info">
           <strong>Recuperación de comentarios</strong>
@@ -473,57 +459,61 @@
         </div>
         <span class="startup-status">Pendiente</span>
       </div>
-
     </div>
-
     <div class="startup-profile" id="startup-profile">
-
       <div class="startup-profile-heading">
         <span>PERFIL DE CUENTA</span>
         <span id="startup-profile-status">Verificando...</span>
       </div>
-
       <div class="startup-profile-data">
-        <img
-          id="startup-avatar"
-          src="logo.png"
-          alt="Foto de perfil de TikTok"
-        >
-
+        <img id="startup-avatar" src="logo.png" alt="Foto de perfil de TikTok">
         <div class="startup-profile-info">
           <strong id="startup-nickname">Recuperando perfil</strong>
           <span id="startup-username">@usuario</span>
         </div>
-
         <span id="startup-profile-check">●</span>
       </div>
-
     </div>
-
     <div class="startup-progress">
       <div class="startup-progress-track">
         <div id="startup-progress-bar"></div>
       </div>
       <span id="startup-progress-text">Verificando servicios...</span>
     </div>
-
-    <button
-      id="btn-startup-continue"
-      class="startup-continue"
-      type="button"
-      style="display: none;"
-    >
+    <button id="btn-startup-continue" class="startup-continue" type="button" style="display: none;">
       CONTINUAR
     </button>
-
     <p class="startup-footer">
       MarUnity LIVE Tex · Preparación de cuenta
     </p>
-
   </div>
-
 </div>
 <!-- FIN PANTALLA DE PREPARACIÓN -->
+
+<!-- MODAL DE PAGO - MarUnity -->
+<div id="modal-pago" class="tiktok-modal hidden">
+  <div class="tiktok-modal-backdrop" id="modal-pago-backdrop"></div>
+  <div class="tiktok-confirm-card" role="dialog" aria-modal="true">
+    <div class="confirm-header">
+      <div>
+        <span class="confirm-eyebrow">MARUNITY PRO</span>
+        <h2>¿Cómo querés pagar?</h2>
+      </div>
+      <button id="btn-cerrar-pago" class="confirm-close" type="button">✕</button>
+    </div>
+    <p style="text-align:center; font-size:20px; font-weight:900; color:#A855F7; margin: 10px 0;">$5.99 USD / mes</p>
+    <p style="text-align:center; color:#94a3b8; font-size:13px; margin-bottom:16px;">Elegí tu método de pago</p>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button id="btn-pagar-paypal" type="button" style="padding:15px; border-radius:12px; border:none; background:#003087; color:#fff; font-size:16px; font-weight:800; cursor:pointer;">
+        💙 Pagar con PayPal
+      </button>
+      <button id="btn-pagar-mp" type="button" style="padding:15px; border-radius:12px; border:none; background:#009EE3; color:#fff; font-size:16px; font-weight:800; cursor:pointer;">
+        💙 Pagar con Mercado Pago
+      </button>
+    </div>
+    <p style="text-align:center; color:#94a3b8; font-size:12px; margin-top:14px;">🔒 Pago seguro. Podés cancelar cuando quieras.</p>
+  </div>
+</div>
 
 <script src="premium-config.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -535,14 +525,11 @@
     var box = document.getElementById('plan-box');
     var btnClose = document.getElementById('btn-close-plan');
     if (!box || !btnClose) return;
-
     var KEY = 'marunity_plan_closed_at_v4';
     var UN_DIA = 24 * 60 * 60 * 1000;
-
     if (window.location.search.indexOf('reset-plan') !== -1) {
       try { localStorage.removeItem(KEY); } catch (e) {}
     }
-
     function ocultarSinHueco() {
       box.style.display = 'none';
       box.style.margin = '0';
@@ -550,7 +537,6 @@
       box.style.height = '0';
       box.style.overflow = 'hidden';
     }
-
     try {
       var lastClosed = parseInt(localStorage.getItem(KEY) || '0', 10);
       var now = Date.now();
@@ -558,7 +544,6 @@
         ocultarSinHueco();
       }
     } catch (e) {}
-
     btnClose.addEventListener('click', function() {
       ocultarSinHueco();
       try {
@@ -566,6 +551,33 @@
       } catch (e) {}
     });
   })();
+</script>
+<script>
+  // Abrir modal de pago - usa PREMIUM_DATA de premium-config.js
+  document.addEventListener("DOMContentLoaded", function() {
+    var btnComprar = document.getElementById("btn-comprar-premium");
+    var modal = document.getElementById("modal-pago");
+    var btnCerrar = document.getElementById("btn-cerrar-pago");
+    var backdrop = document.getElementById("modal-pago-backdrop");
+    if (btnComprar && modal) {
+      btnComprar.addEventListener("click", function() { modal.classList.remove("hidden"); });
+    }
+    function cerrar() { if (modal) modal.classList.add("hidden"); }
+    if (btnCerrar) btnCerrar.addEventListener("click", cerrar);
+    if (backdrop) backdrop.addEventListener("click", cerrar);
+    var btnPaypal = document.getElementById("btn-pagar-paypal");
+    var btnMP = document.getElementById("btn-pagar-mp");
+    if (btnPaypal) btnPaypal.addEventListener("click", function() {
+      if (typeof PREMIUM_DATA !== "undefined" && PREMIUM_DATA.link_paypal_mensual) {
+        window.open(PREMIUM_DATA.link_paypal_mensual, "_blank");
+      }
+    });
+    if (btnMP) btnMP.addEventListener("click", function() {
+      if (typeof PREMIUM_DATA !== "undefined" && PREMIUM_DATA.link_mp_mensual) {
+        window.open(PREMIUM_DATA.link_mp_mensual, "_blank");
+      }
+    });
+  });
 </script>
 </body>
 </html>
